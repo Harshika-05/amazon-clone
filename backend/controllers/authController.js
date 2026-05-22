@@ -6,6 +6,8 @@ const { sendOtpEmail } = require('../services/emailService');
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'amazon-clone-super-secret-key-2026';
 
+global.emailPreviews = global.emailPreviews || {};
+
 // Register a new user
 const register = async (req, res) => {
   try {
@@ -131,12 +133,47 @@ const getMe = async (req, res) => {
   }
 };
 
+// ─── Email Preview Redirect ───────────────────────────────────────────────────
+const getOtpPreview = (req, res) => {
+  const { email } = req.params;
+  const url = global.emailPreviews[`otp_${email}`];
+
+  if (url) {
+    return res.redirect(url);
+  }
+
+  // If email is still being generated, show a loading page that auto-refreshes
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta http-equiv="refresh" content="2">
+        <title>Loading Email Preview...</title>
+        <style>
+          body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f3f3f3; margin: 0; }
+          .loader { text-align: center; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+          .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #ff9900; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px auto; }
+          @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        </style>
+      </head>
+      <body>
+        <div class="loader">
+          <div class="spinner"></div>
+          <h2>Generating OTP Email Preview...</h2>
+          <p style="color: #666;">This may take a few seconds.</p>
+        </div>
+      </body>
+    </html>
+  `);
+};
+
 module.exports = {
   register,
   login,
   getMe,
   sendOtp,
-  verifyOtp
+  verifyOtp,
+  getOtpPreview
 };
 
 // ─── Send OTP ────────────────────────────────────────────────────────────────
@@ -160,12 +197,17 @@ async function sendOtp(req, res) {
       create: { email, otp, expiresAt }
     });
 
-    // Send OTP via email
-    const { previewUrl } = await sendOtpEmail(email, otp, name);
+    // Send OTP via email (non-blocking)
+    sendOtpEmail(email, otp, name).then(({ previewUrl }) => {
+      if (previewUrl) {
+        global.emailPreviews[`otp_${email}`] = previewUrl;
+      }
+    }).catch(console.error);
 
-    res.json({
-      message: 'OTP sent to your email',
-      previewUrl // returned so developer can preview in Ethereal during testing
+    // Return instant redirect URL
+    res.json({ 
+      message: 'OTP sent successfully',
+      previewUrl: `${req.protocol}://${req.get('host')}/api/auth/otp-preview/${email}`
     });
   } catch (error) {
     console.error('Send OTP error:', error);
