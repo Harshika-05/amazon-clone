@@ -9,9 +9,15 @@ const prisma = new PrismaClient();
 app.use(cors());
 app.use(express.json());
 
-// Health check endpoint (used by keep-alive ping to prevent Render cold starts)
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Health check endpoint (used by keep-alive ping to prevent Render AND Neon DB cold starts)
+app.get('/health', async (req, res) => {
+  try {
+    // Ping the database to keep Neon Postgres awake
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'ok', timestamp: new Date().toISOString(), db: 'connected' });
+  } catch (error) {
+    res.status(500).json({ status: 'error', error: error.message });
+  }
 });
 
 // Auth routes
