@@ -27,8 +27,12 @@ const getTransporter = async () => {
       throw new Error('Both GMAIL_USER and GMAIL_PASS must be provided in environment variables');
     }
     // REAL EMAIL (GMAIL)
+    // We explicitly use port 587 because Render often blocks/timeouts on port 465
     transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      requireTLS: true,
       auth: {
         user: gmailUser,
         pass: gmailPass,
