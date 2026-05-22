@@ -9,6 +9,11 @@ const prisma = new PrismaClient();
 app.use(cors());
 app.use(express.json());
 
+// Health check endpoint (used by keep-alive ping to prevent Render cold starts)
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Auth routes
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);

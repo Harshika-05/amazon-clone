@@ -164,7 +164,7 @@ const sendOrderConfirmation = async ({ toEmail, orderId, items, totalAmount, shi
   }
 };
 
-module.exports = { sendOrderConfirmation, sendOtpEmail };
+module.exports = { sendOrderConfirmation, sendOtpEmail, sendOrderCancellation };
 
 /**
  * Sends an OTP verification email during signup.
@@ -229,6 +229,94 @@ async function sendOtpEmail(toEmail, otp, name) {
     return { success: true, previewUrl };
   } catch (error) {
     console.error('Failed to send OTP email:', error);
+    return { success: false, previewUrl: null };
+  }
+}
+
+/**
+ * Sends an order cancellation confirmation email.
+ */
+async function sendOrderCancellation({ toEmail, orderId, items, totalAmount, reason }) {
+  try {
+    const transport = await getTransporter();
+
+    const itemRows = items.map((item) => `
+      <tr>
+        <td style="padding:10px 12px;border-bottom:1px solid #eee;">${item.product?.name || 'Product'}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #eee;text-align:center;">${item.quantity}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #eee;text-align:right;">${formatINR(item.priceAtPurchase)}</td>
+      </tr>
+    `).join('');
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="utf-8"></head>
+      <body style="margin:0;padding:0;font-family:Arial,sans-serif;background-color:#eaeded;">
+        <div style="max-width:600px;margin:0 auto;background-color:white;">
+          <div style="background-color:#131921;padding:20px;text-align:center;">
+            <span style="color:white;font-size:28px;font-weight:bold;">
+              amazon<span style="color:#ff9900;">.in</span>
+            </span>
+          </div>
+
+          <div style="background-color:#fff4f4;padding:20px;text-align:center;border-bottom:3px solid #c40000;">
+            <div style="color:#c40000;font-size:24px;margin-bottom:5px;">✕ Order Cancelled</div>
+            <div style="color:#565959;font-size:14px;">Your order has been successfully cancelled.</div>
+          </div>
+
+          <div style="padding:20px 30px;">
+            <table style="width:100%;margin-bottom:10px;font-size:14px;color:#565959;">
+              <tr>
+                <td style="padding:4px 0;"><strong>Order ID:</strong></td>
+                <td style="padding:4px 0;">${orderId}</td>
+              </tr>
+              ${reason ? `<tr>
+                <td style="padding:4px 0;"><strong>Reason:</strong></td>
+                <td style="padding:4px 0;">${reason}</td>
+              </tr>` : ''}
+            </table>
+
+            <table style="width:100%;border-collapse:collapse;margin-top:15px;font-size:14px;">
+              <thead>
+                <tr style="background-color:#F3F3F3;">
+                  <th style="padding:10px 12px;text-align:left;font-weight:700;">Item</th>
+                  <th style="padding:10px 12px;text-align:center;font-weight:700;">Qty</th>
+                  <th style="padding:10px 12px;text-align:right;font-weight:700;">Price</th>
+                </tr>
+              </thead>
+              <tbody>${itemRows}</tbody>
+            </table>
+
+            <div style="text-align:right;margin-top:15px;padding-top:15px;border-top:2px solid #c40000;">
+              <span style="font-size:16px;color:#565959;text-decoration:line-through;">
+                Refund Amount: ${formatINR(totalAmount)}
+              </span>
+            </div>
+
+            <p style="margin-top:20px;font-size:13px;color:#565959;">If you did not request this cancellation, please contact our support team immediately.</p>
+          </div>
+
+          <div style="background-color:#F3F3F3;padding:20px;text-align:center;font-size:12px;color:#999;">
+            <p>© 2026 Amazon Clone. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const info = await transport.sendMail({
+      from: '"Amazon Clone" <noreply@amazon-clone.com>',
+      to: toEmail,
+      subject: `Amazon Clone - Order #${orderId.substring(0, 8)} Cancelled`,
+      html: htmlContent,
+    });
+
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    console.log(`📧 Cancellation email sent! Preview: ${previewUrl}`);
+    return { success: true, previewUrl };
+  } catch (error) {
+    console.error('Failed to send cancellation email:', error);
     return { success: false, previewUrl: null };
   }
 }

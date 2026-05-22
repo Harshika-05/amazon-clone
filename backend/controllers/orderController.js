@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const { sendOrderConfirmation } = require('../services/emailService');
+const { sendOrderConfirmation, sendOrderCancellation } = require('../services/emailService');
 const prisma = new PrismaClient();
 
 exports.placeOrder = async (req, res, next) => {
@@ -182,7 +182,19 @@ exports.cancelOrder = async (req, res, next) => {
       });
     });
 
-    res.json(cancelled);
+    // Send cancellation email (non-blocking)
+    const emailResult = await sendOrderCancellation({
+      toEmail: req.user.email,
+      orderId: cancelled.id,
+      items: cancelled.items,
+      totalAmount: cancelled.totalAmount,
+      reason: reason || 'No reason provided',
+    });
+
+    res.json({
+      ...cancelled,
+      emailPreviewUrl: emailResult.previewUrl,
+    });
   } catch (error) {
     next(error);
   }
