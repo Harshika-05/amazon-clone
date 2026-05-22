@@ -205,28 +205,23 @@ module.exports = {
 // ─── Test Email Config ────────────────────────────────────────────────────────
 async function testEmailConfig(req, res) {
   try {
-    const { sendOtpEmail } = require('../services/emailService');
-    
-    if (!process.env.RESEND_API_KEY) {
+    if (!process.env.BREVO_API_KEY) {
       return res.status(500).json({ 
-        error: 'RESEND_API_KEY not set',
-        fix: 'Go to https://resend.com, sign up free, get API key, add to Render env vars'
+        error: 'BREVO_API_KEY not set',
+        fix: '1) Sign up free at https://app.brevo.com  2) Settings → SMTP & API → API Keys → Generate  3) Add BREVO_API_KEY to Render env vars'
       });
     }
 
-    // Send a test OTP to confirm it works
-    const result = await sendOtpEmail('harshikagoyal05@gmail.com', '123456', 'Test User');
+    const { sendOtpEmail } = require('../services/emailService');
+    const result = await sendOtpEmail('harshikagoyal05@gmail.com', '999999', 'Test');
     
     if (result.success) {
-      res.json({ status: 'Success! Test email sent via Resend.' });
+      res.json({ status: '✅ Email sent successfully via Brevo!' });
     } else {
       res.status(500).json({ error: 'Email failed', details: result.error });
     }
   } catch (err) {
-    res.status(500).json({ 
-      error: 'Email test failed', 
-      message: err.message
-    });
+    res.status(500).json({ error: 'Test failed', message: err.message });
   }
 }
 
