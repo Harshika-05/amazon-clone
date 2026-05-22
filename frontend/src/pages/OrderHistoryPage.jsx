@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/common/Toast';
 import styles from './OrderHistoryPage.module.css';
+import API_BASE_URL from '../config';
 
 // Real Amazon cancellation reasons
 const CANCEL_REASONS = [
@@ -43,7 +44,7 @@ const OrderHistoryPage = () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/orders/history', {
+      const res = await axios.get(`${API_BASE_URL}/api/orders/history`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setOrders(res.data);
@@ -65,7 +66,7 @@ const OrderHistoryPage = () => {
     setCancelling(true);
     try {
       await axios.patch(
-        `http://localhost:5000/api/orders/${cancelModal.id}/cancel`,
+        `${API_BASE_URL}/api/orders/${cancelModal.id}/cancel`,
         { reason: selectedReason },
         { headers: { Authorization: `Bearer ${token}` } }
       );

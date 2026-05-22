@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import styles from './CheckoutPage.module.css';
+import API_BASE_URL from '../config';
 
 const CheckoutPage = () => {
   const { cart, cartTotal, cartItemCount, clearCart } = useCart();
@@ -27,7 +28,7 @@ const CheckoutPage = () => {
     setLoading(true);
     try {
       const formattedAddress = `${address.fullName}, ${address.street}, ${address.city}, ${address.zipCode}, ${address.country}`;
-      const response = await axios.post('http://localhost:5000/api/orders', {
+      const response = await axios.post(`${API_BASE_URL}/api/orders`, {
         shippingAddress: formattedAddress
       }, {
         headers: { Authorization: `Bearer ${token}` }

@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useAuth } from '../context/AuthContext';
 import styles from './ProductDetail.module.css';
+import API_BASE_URL from '../config';
 
 const PLACEHOLDER_IMG = 'https://via.placeholder.com/500';
 
@@ -32,7 +33,7 @@ const ProductDetail = () => {
 
   const fetchReviews = useCallback(async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/reviews/${id}`);
+      const res = await axios.get(`${API_BASE_URL}/api/reviews/${id}`);
       setReviews(res.data.reviews);
       setAvgRating(res.data.averageRating);
       setTotalReviews(res.data.totalReviews);
@@ -53,7 +54,7 @@ const ProductDetail = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/products/${id}`);
+        const response = await axios.get(`${API_BASE_URL}/api/products/${id}`);
         setProduct(response.data);
         setActiveImage(response.data.images?.[0]?.url || PLACEHOLDER_IMG);
       } catch (error) {
@@ -93,7 +94,7 @@ const ProductDetail = () => {
     setReviewSubmitting(true);
     setReviewMessage('');
     try {
-      await axios.post('http://localhost:5000/api/reviews', {
+      await axios.post(`${API_BASE_URL}/api/reviews`, {
         productId: id,
         rating: userRating,
         comment: userComment
@@ -111,7 +112,7 @@ const ProductDetail = () => {
 
   const handleDeleteReview = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/reviews/${id}`, {
+      await axios.delete(`${API_BASE_URL}/api/reviews/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUserRating(0);

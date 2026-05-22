@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import API_BASE_URL from '../config';
 
 const OrderConfirmation = () => {
   const { id } = useParams();
@@ -14,7 +15,7 @@ const OrderConfirmation = () => {
     const fetchOrder = async () => {
       if (!token) return;
       try {
-        const response = await axios.get(`http://localhost:5000/api/orders/${id}`, {
+        const response = await axios.get(`${API_BASE_URL}/api/orders/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setOrder(response.data);

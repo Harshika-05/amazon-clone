@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 import styles from './ProductList.module.css';
+import API_BASE_URL from '../config';
 
 const HERO_SLIDES = [
   {
@@ -95,7 +96,7 @@ const ProductList = () => {
         params.append('page', page);
         params.append('limit', LIMIT);
 
-        const response = await axios.get(`http://localhost:5000/api/products?${params.toString()}`);
+        const response = await axios.get(`${API_BASE_URL}/api/products?${params.toString()}`);
         const { products: fetchedProducts, pagination: pag } = response.data;
 
         setProducts(fetchedProducts);

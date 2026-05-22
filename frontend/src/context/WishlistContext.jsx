@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from './AuthContext';
 import { useToast } from '../components/common/Toast';
+import API_BASE_URL from '../config';
 
 const WishlistContext = createContext();
 
@@ -20,7 +21,7 @@ export const WishlistProvider = ({ children }) => {
       return;
     }
     try {
-      const response = await axios.get('http://localhost:5000/api/wishlist', {
+      const response = await axios.get(`${API_BASE_URL}/api/wishlist`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setWishlist(response.data);
@@ -41,7 +42,7 @@ export const WishlistProvider = ({ children }) => {
   const addToWishlist = async (productId) => {
     if (!token) return showToast('Please login to add items to your wishlist', 'error');
     try {
-      await axios.post('http://localhost:5000/api/wishlist/items', { productId }, {
+      await axios.post(`${API_BASE_URL}/api/wishlist/items`, { productId }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       await fetchWishlist();
@@ -55,7 +56,7 @@ export const WishlistProvider = ({ children }) => {
   const removeFromWishlist = async (productId) => {
     if (!token) return;
     try {
-      await axios.delete(`http://localhost:5000/api/wishlist/items/${productId}`, {
+      await axios.delete(`${API_BASE_URL}/api/wishlist/items/${productId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       await fetchWishlist();
