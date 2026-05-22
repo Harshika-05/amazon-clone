@@ -234,7 +234,7 @@ async function sendOtpEmail(toEmail, otp, name) {
     `;
 
     const info = await transport.sendMail({
-      from: process.env.GMAIL_USER ? \`"Amazon Clone" <\${process.env.GMAIL_USER}>\` : '"Amazon Clone" <noreply@amazon-clone.com>',
+      from: `"Amazon Clone" <${process.env.GMAIL_USER || 'noreply@amazon-clone.com'}>`,
       to: toEmail,
       subject: `${otp} is your Amazon OTP`,
       html: htmlContent,
@@ -323,7 +323,7 @@ async function sendOrderCancellation({ toEmail, orderId, items, totalAmount, rea
     `;
 
     const info = await transport.sendMail({
-      from: process.env.GMAIL_USER ? \`"Amazon Clone" <\${process.env.GMAIL_USER}>\` : '"Amazon Clone" <noreply@amazon-clone.com>',
+      from: `"Amazon Clone" <${process.env.GMAIL_USER || 'noreply@amazon-clone.com'}>`,
       to: toEmail,
       subject: `Amazon Clone - Order #${orderId.substring(0, 8)} Cancelled`,
       html: htmlContent,
