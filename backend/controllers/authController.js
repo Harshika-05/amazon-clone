@@ -203,25 +203,27 @@ module.exports = {
 // ─── Test Email Config ────────────────────────────────────────────────────────
 async function testEmailConfig(req, res) {
   try {
-    const { getTransporter } = require('../services/emailService');
-    const transport = await getTransporter();
+    const { sendOtpEmail } = require('../services/emailService');
     
-    // The transporter's auth config has the user
-    const user = transport.transporter.options.auth.user || process.env.GMAIL_USER || 'harshikagoyal05@gmail.com';
+    if (!process.env.RESEND_API_KEY) {
+      return res.status(500).json({ 
+        error: 'RESEND_API_KEY not set',
+        fix: 'Go to https://resend.com, sign up free, get API key, add to Render env vars'
+      });
+    }
 
-    const info = await transport.sendMail({
-      from: `"Test" <${user}>`,
-      to: user,
-      subject: `Test Email Connection`,
-      text: `Your Gmail SMTP is working correctly!`,
-    });
-
-    res.json({ status: 'Success!', info });
+    // Send a test OTP to confirm it works
+    const result = await sendOtpEmail('harshikagoyal05@gmail.com', '123456', 'Test User');
+    
+    if (result.success) {
+      res.json({ status: 'Success! Test email sent via Resend.' });
+    } else {
+      res.status(500).json({ error: 'Email failed', details: result.error });
+    }
   } catch (err) {
     res.status(500).json({ 
-      error: 'SMTP Connection Failed', 
-      message: err.message,
-      stack: err.stack
+      error: 'Email test failed', 
+      message: err.message
     });
   }
 }
