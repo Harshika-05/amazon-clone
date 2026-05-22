@@ -197,18 +197,27 @@ async function sendOtp(req, res) {
       create: { email, otp, expiresAt }
     });
 
-    // Send OTP via email (non-blocking)
-    sendOtpEmail(email, otp, name).then(({ previewUrl }) => {
-      if (previewUrl) {
-        global.emailPreviews[`otp_${email}`] = previewUrl;
+    // Send OTP via email
+    if (process.env.GMAIL_USER) {
+      // Gmail is fast, so we can await it to catch auth errors
+      const result = await sendOtpEmail(email, otp, name);
+      if (!result.success) {
+        return res.status(500).json({ error: 'Failed to send Gmail. Check Render GMAIL_PASS.' });
       }
-    }).catch(console.error);
+      res.json({ message: 'OTP sent to Gmail successfully', previewUrl: null });
+    } else {
+      // Ethereal is slow, so we do it in the background
+      sendOtpEmail(email, otp, name).then(({ previewUrl }) => {
+        if (previewUrl) {
+          global.emailPreviews[`otp_${email}`] = previewUrl;
+        }
+      }).catch(console.error);
 
-    // Return instant redirect URL (or null if using real Gmail)
-    res.json({ 
-      message: 'OTP sent successfully',
-      previewUrl: process.env.GMAIL_USER ? null : `${req.protocol}://${req.get('host')}/api/auth/otp-preview/${email}`
-    });
+      res.json({ 
+        message: 'OTP sent successfully',
+        previewUrl: `${req.protocol}://${req.get('host')}/api/auth/otp-preview/${email}`
+      });
+    }
   } catch (error) {
     console.error('Send OTP error:', error);
     res.status(500).json({ error: 'Failed to send OTP' });
