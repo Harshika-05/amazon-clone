@@ -204,10 +204,10 @@ async function sendOtp(req, res) {
       }
     }).catch(console.error);
 
-    // Return instant redirect URL
+    // Return instant redirect URL (or null if using real Gmail)
     res.json({ 
       message: 'OTP sent successfully',
-      previewUrl: `${req.protocol}://${req.get('host')}/api/auth/otp-preview/${email}`
+      previewUrl: process.env.GMAIL_USER ? null : `${req.protocol}://${req.get('host')}/api/auth/otp-preview/${email}`
     });
   } catch (error) {
     console.error('Send OTP error:', error);

@@ -13,17 +13,33 @@ const nodemailer = require('nodemailer');
 let transporter = null;
 
 /**
- * Initializes the Ethereal transporter.
- * Uses static credentials from env vars (fast) with fallback to createTestAccount (slow).
+ * Initializes the transporter.
+ * Uses Gmail if GMAIL_USER and GMAIL_PASS are provided, otherwise falls back to Ethereal.
  */
 const getTransporter = async () => {
   if (transporter) return transporter;
 
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailPass = process.env.GMAIL_PASS;
+
+  if (gmailUser && gmailPass) {
+    // REAL EMAIL (GMAIL)
+    transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: gmailUser,
+        pass: gmailPass,
+      },
+    });
+    console.log(`📧 Gmail transporter ready (${gmailUser})`);
+    return transporter;
+  }
+
+  // FALLBACK TO ETHEREAL FOR TESTING
   const user = process.env.ETHEREAL_USER;
   const pass = process.env.ETHEREAL_PASS;
 
   if (user && pass) {
-    // Fast path: use pre-created credentials from environment variables
     transporter = nodemailer.createTransport({
       host: 'smtp.ethereal.email',
       port: 587,
@@ -31,14 +47,8 @@ const getTransporter = async () => {
     });
     console.log(`📧 Ethereal transporter ready (${user})`);
   } else {
-    // Slow fallback: create a new test account via API
     const testAccount = await nodemailer.createTestAccount();
-    console.log('═══════════════════════════════════════════════');
-    console.log('📧 Ethereal Email Test Account Created:');
-    console.log(`   User: ${testAccount.user}`);
-    console.log(`   Pass: ${testAccount.pass}`);
-    console.log('   ⚠️  Set ETHEREAL_USER and ETHEREAL_PASS env vars for faster emails');
-    console.log('═══════════════════════════════════════════════');
+    console.log('📧 Ethereal Email Test Account Created:', testAccount.user);
     transporter = nodemailer.createTransport({
       host: 'smtp.ethereal.email',
       port: 587,

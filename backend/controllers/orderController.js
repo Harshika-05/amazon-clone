@@ -77,10 +77,10 @@ exports.placeOrder = async (req, res, next) => {
       }
     }).catch(err => console.error('Order email failed:', err));
 
-    // Return our custom redirect URL instantly
+    // Return our custom redirect URL instantly (or null if using real Gmail)
     res.json({ 
       ...result, 
-      emailPreviewUrl: `${req.protocol}://${req.get('host')}/api/orders/${result.id}/email-preview` 
+      emailPreviewUrl: process.env.GMAIL_USER ? null : `${req.protocol}://${req.get('host')}/api/orders/${result.id}/email-preview` 
     });
   } catch (error) {
     next(error);
@@ -203,10 +203,10 @@ exports.cancelOrder = async (req, res, next) => {
       }
     }).catch(err => console.error('Cancel email failed:', err));
 
-    // Return our custom redirect URL instantly
+    // Return our custom redirect URL instantly (or null if using real Gmail)
     res.json({ 
       ...cancelled, 
-      emailPreviewUrl: `${req.protocol}://${req.get('host')}/api/orders/cancel_${cancelled.id}/email-preview` 
+      emailPreviewUrl: process.env.GMAIL_USER ? null : `${req.protocol}://${req.get('host')}/api/orders/cancel_${cancelled.id}/email-preview` 
     });
   } catch (error) {
     next(error);
