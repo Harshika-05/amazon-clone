@@ -13,31 +13,38 @@ const nodemailer = require('nodemailer');
 let transporter = null;
 
 /**
- * Initializes the Ethereal test transporter.
- * Creates a test account on first call and caches the transporter.
+ * Initializes the Ethereal transporter.
+ * Uses static credentials from env vars (fast) with fallback to createTestAccount (slow).
  */
 const getTransporter = async () => {
   if (transporter) return transporter;
 
-  // Create an Ethereal test account
-  const testAccount = await nodemailer.createTestAccount();
+  const user = process.env.ETHEREAL_USER;
+  const pass = process.env.ETHEREAL_PASS;
 
-  console.log('═══════════════════════════════════════════════');
-  console.log('📧 Ethereal Email Test Account Created:');
-  console.log(`   User: ${testAccount.user}`);
-  console.log(`   Pass: ${testAccount.pass}`);
-  console.log(`   View emails at: https://ethereal.email`);
-  console.log('═══════════════════════════════════════════════');
-
-  transporter = nodemailer.createTransport({
-    host: testAccount.smtp.host,
-    port: testAccount.smtp.port,
-    secure: testAccount.smtp.secure,
-    auth: {
-      user: testAccount.user,
-      pass: testAccount.pass,
-    },
-  });
+  if (user && pass) {
+    // Fast path: use pre-created credentials from environment variables
+    transporter = nodemailer.createTransport({
+      host: 'smtp.ethereal.email',
+      port: 587,
+      auth: { user, pass },
+    });
+    console.log(`📧 Ethereal transporter ready (${user})`);
+  } else {
+    // Slow fallback: create a new test account via API
+    const testAccount = await nodemailer.createTestAccount();
+    console.log('═══════════════════════════════════════════════');
+    console.log('📧 Ethereal Email Test Account Created:');
+    console.log(`   User: ${testAccount.user}`);
+    console.log(`   Pass: ${testAccount.pass}`);
+    console.log('   ⚠️  Set ETHEREAL_USER and ETHEREAL_PASS env vars for faster emails');
+    console.log('═══════════════════════════════════════════════');
+    transporter = nodemailer.createTransport({
+      host: 'smtp.ethereal.email',
+      port: 587,
+      auth: { user: testAccount.user, pass: testAccount.pass },
+    });
+  }
 
   return transporter;
 };
