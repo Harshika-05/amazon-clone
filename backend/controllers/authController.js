@@ -173,8 +173,36 @@ module.exports = {
   getMe,
   sendOtp,
   verifyOtp,
-  getOtpPreview
+  getOtpPreview,
+  testEmailConfig
 };
+
+// ─── Test Email Config ────────────────────────────────────────────────────────
+async function testEmailConfig(req, res) {
+  try {
+    const { getTransporter } = require('../services/emailService');
+    const transport = await getTransporter();
+    
+    if (!process.env.GMAIL_USER) {
+      return res.json({ status: 'Ethereal mode active. GMAIL_USER not set.' });
+    }
+
+    const info = await transport.sendMail({
+      from: `"Test" <${process.env.GMAIL_USER}>`,
+      to: process.env.GMAIL_USER,
+      subject: `Test Email Connection`,
+      text: `Your Gmail SMTP is working correctly!`,
+    });
+
+    res.json({ status: 'Success!', info });
+  } catch (err) {
+    res.status(500).json({ 
+      error: 'SMTP Connection Failed', 
+      message: err.message,
+      stack: err.stack
+    });
+  }
+}
 
 // ─── Send OTP ────────────────────────────────────────────────────────────────
 async function sendOtp(req, res) {

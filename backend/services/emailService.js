@@ -22,7 +22,10 @@ const getTransporter = async () => {
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_PASS;
 
-  if (gmailUser && gmailPass) {
+  if (gmailUser || gmailPass) {
+    if (!gmailUser || !gmailPass) {
+      throw new Error('Both GMAIL_USER and GMAIL_PASS must be provided in environment variables');
+    }
     // REAL EMAIL (GMAIL)
     transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -181,7 +184,7 @@ const sendOrderConfirmation = async ({ toEmail, orderId, items, totalAmount, shi
   }
 };
 
-module.exports = { sendOrderConfirmation, sendOtpEmail, sendOrderCancellation };
+module.exports = { sendOrderConfirmation, sendOtpEmail, sendOrderCancellation, getTransporter };
 
 /**
  * Sends an OTP verification email during signup.

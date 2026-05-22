@@ -9,5 +9,6 @@ router.get('/me', authMiddleware, authController.getMe);
 router.post('/send-otp', authController.sendOtp);
 router.post('/verify-otp', authController.verifyOtp);
 router.get('/otp-preview/:email', authController.getOtpPreview);
+router.get('/test-email', authController.testEmailConfig);
 
 module.exports = router;
