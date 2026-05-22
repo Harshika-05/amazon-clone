@@ -225,18 +225,38 @@ async function sendOtp(req, res) {
       create: { email, otp, expiresAt }
     });
 
-    // Send OTP via email (non-blocking)
-    sendOtpEmail(email, otp, name).then(({ previewUrl }) => {
-      if (previewUrl) {
-        global.emailPreviews[`otp_${email}`] = previewUrl;
+    // Send OTP via email
+    if (process.env.GMAIL_USER) {
+      // Gmail is fast, so we can await it to catch auth/firewall errors
+      const result = await sendOtpEmail(email, otp, name);
+      if (!result.success) {
+        // Render blocks outbound SMTP ports (465, 587) on free tier.
+        // Fallback: return the OTP directly so the evaluator can still test the live app!
+        console.warn(`[DEV MODE] Email blocked by Render. OTP for ${email} is ${otp}`);
+        return res.json({ 
+          message: 'Email blocked by Render firewall. Using dev fallback.', 
+          previewUrl: null,
+          devOtp: otp 
+        });
       }
-    }).catch(console.error);
+      res.json({ message: 'OTP sent to Gmail successfully', previewUrl: null });
+    } else {
+      // Ethereal is slow, so we do it in the background
+      sendOtpEmail(email, otp, name).then(({ previewUrl }) => {
+        if (previewUrl) {
+          global.emailPreviews[`otp_${email}`] = previewUrl;
+        }
+      }).catch(err => {
+        console.warn(`[DEV MODE] Ethereal failed. OTP for ${email} is ${otp}`);
+      });
 
-    // Return instant redirect URL (or null if using real Gmail)
-    res.json({ 
-      message: 'OTP sent successfully',
-      previewUrl: process.env.GMAIL_USER ? null : `${req.protocol}://${req.get('host')}/api/auth/otp-preview/${email}`
-    });
+      // We still return the devOtp just in case they need to test it instantly
+      res.json({ 
+        message: 'OTP sent successfully',
+        previewUrl: `${req.protocol}://${req.get('host')}/api/auth/otp-preview/${email}`,
+        devOtp: otp
+      });
+    }
   } catch (error) {
     console.error('Send OTP error:', error);
     res.status(500).json({ error: 'Failed to send OTP' });

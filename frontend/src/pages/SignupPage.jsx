@@ -38,7 +38,15 @@ const SignupPage = () => {
       const data = await res.json();
       if (res.ok) {
         setStep(STEPS.OTP);
-        setInfo(`OTP sent to ${email}`);
+        
+        if (data.devOtp) {
+          // Render blocked the email, so we show the Dev OTP directly
+          setInfo(`Email blocked by Render Firewall. Your test OTP is: ${data.devOtp}`);
+          setOtp(data.devOtp.split(''));
+        } else {
+          setInfo(`OTP sent to ${email}`);
+        }
+        
         setPreviewUrl(data.previewUrl || '');
         startResendTimer();
       } else {
