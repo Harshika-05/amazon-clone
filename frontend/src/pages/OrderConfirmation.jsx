@@ -29,7 +29,7 @@ const OrderConfirmation = () => {
   }, [id, token]);
 
   // Get emailPreviewUrl from sessionStorage (set during checkout)
-  const emailPreviewUrl = sessionStorage.getItem('emailPreviewUrl');
+  // Removed, we no longer use it as we use real SMTP
 
   return (
     <div style={{ maxWidth: '800px', margin: '40px auto', padding: '20px' }}>
@@ -104,41 +104,7 @@ const OrderConfirmation = () => {
         </div>
       </div>
 
-      {/* Email Preview Card */}
-      {emailPreviewUrl && (
-        <div style={{ 
-          backgroundColor: '#FFF8E1', 
-          border: '1px solid #FFD814',
-          borderRadius: '8px', 
-          padding: '20px',
-          marginBottom: '20px',
-          textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '16px', fontWeight: '700', marginBottom: '8px', color: '#0F1111' }}>
-            📧 Order Confirmation Email Sent!
-          </div>
-          <div style={{ fontSize: '13px', color: '#565959', marginBottom: '12px' }}>
-            Using Ethereal test email — click below to preview the email:
-          </div>
-          <a 
-            href={emailPreviewUrl} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            style={{ 
-              display: 'inline-block',
-              backgroundColor: '#131921', 
-              color: 'white', 
-              padding: '10px 24px', 
-              textDecoration: 'none', 
-              borderRadius: '20px',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}
-          >
-            View Email Preview →
-          </a>
-        </div>
-      )}
+      {/* Email Preview Card Removed */}
 
       {/* Continue Shopping */}
       <div style={{ textAlign: 'center' }}>

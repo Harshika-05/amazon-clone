@@ -81,10 +81,6 @@ const OrderHistoryPage = () => {
       setCancelModal(null);
       showToast('Order cancelled successfully!', 'success');
 
-      // Open cancellation email preview in new tab
-      if (res.data.emailPreviewUrl) {
-        window.open(res.data.emailPreviewUrl, '_blank');
-      }
     } catch (err) {
       showToast(err.response?.data?.error || 'Failed to cancel order', 'error');
     } finally {

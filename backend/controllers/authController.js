@@ -58,7 +58,7 @@ const register = async (req, res) => {
   }
 };
 
-// Login existing user
+// Login Step 1: Verify credentials and send OTP
 const login = async (req, res) => {
   try {
     const { email, password, location } = req.body;
@@ -81,6 +81,61 @@ const login = async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Upsert into OtpVerification table
+    await prisma.otpVerification.upsert({
+      where: { email },
+      update: { otp, expiresAt },
+      create: { email, otp, expiresAt }
+    });
+
+    // Send OTP via email
+    const result = await sendOtpEmail(email, otp, user.name);
+    if (!result.success) {
+      return res.status(500).json({ error: 'Failed to send OTP email: ' + result.error });
+    }
+
+    res.json({ message: 'OTP sent successfully to email' });
+  } catch (error) {
+    console.error('Login Step 1 error:', error);
+    res.status(500).json({ error: 'Server error during login' });
+  }
+};
+
+// Login Step 2: Verify OTP and return token
+const verifyLoginOtp = async (req, res) => {
+  try {
+    const { email, otp, location } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ error: 'Please provide email and OTP' });
+    }
+
+    // Find OTP record
+    const record = await prisma.otpVerification.findUnique({ where: { email } });
+    if (!record) return res.status(400).json({ error: 'No OTP found for this email' });
+
+    // Check expiry
+    if (new Date() > record.expiresAt) {
+      await prisma.otpVerification.delete({ where: { email } });
+      return res.status(400).json({ error: 'OTP has expired' });
+    }
+
+    // Check OTP match
+    if (record.otp !== otp) {
+      return res.status(400).json({ error: 'Incorrect OTP' });
+    }
+
+    // Find user
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(400).json({ error: 'User not found' });
+
+    // Clean up the OTP record
+    await prisma.otpVerification.delete({ where: { email } });
 
     // Create JWT
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
@@ -105,8 +160,8 @@ const login = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Server error during login' });
+    console.error('Verify Login OTP error:', error);
+    res.status(500).json({ error: 'Server error during login verification' });
   }
 };
 
@@ -133,47 +188,15 @@ const getMe = async (req, res) => {
   }
 };
 
-// ─── Email Preview Redirect ───────────────────────────────────────────────────
-const getOtpPreview = (req, res) => {
-  const { email } = req.params;
-  const url = global.emailPreviews[`otp_${email}`];
-
-  if (url) {
-    return res.redirect(url);
-  }
-
-  // If email is still being generated, show a loading page that auto-refreshes
-  res.send(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta http-equiv="refresh" content="2">
-        <title>Loading Email Preview...</title>
-        <style>
-          body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f3f3f3; margin: 0; }
-          .loader { text-align: center; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-          .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #ff9900; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px auto; }
-          @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        </style>
-      </head>
-      <body>
-        <div class="loader">
-          <div class="spinner"></div>
-          <h2>Generating OTP Email Preview...</h2>
-          <p style="color: #666;">This may take a few seconds.</p>
-        </div>
-      </body>
-    </html>
-  `);
-};
+// Ethereal removed, no preview needed
 
 module.exports = {
   register,
   login,
+  verifyLoginOtp,
   getMe,
   sendOtp,
   verifyOtp,
-  getOtpPreview,
   testEmailConfig
 };
 
@@ -183,13 +206,12 @@ async function testEmailConfig(req, res) {
     const { getTransporter } = require('../services/emailService');
     const transport = await getTransporter();
     
-    if (!process.env.GMAIL_USER) {
-      return res.json({ status: 'Ethereal mode active. GMAIL_USER not set.' });
-    }
+    // The transporter's auth config has the user
+    const user = transport.transporter.options.auth.user || process.env.GMAIL_USER || 'harshikagoyal05@gmail.com';
 
     const info = await transport.sendMail({
-      from: `"Test" <${process.env.GMAIL_USER}>`,
-      to: process.env.GMAIL_USER,
+      from: `"Test" <${user}>`,
+      to: user,
       subject: `Test Email Connection`,
       text: `Your Gmail SMTP is working correctly!`,
     });
@@ -226,37 +248,12 @@ async function sendOtp(req, res) {
     });
 
     // Send OTP via email
-    if (process.env.GMAIL_USER) {
-      // Gmail is fast, so we can await it to catch auth/firewall errors
-      const result = await sendOtpEmail(email, otp, name);
-      if (!result.success) {
-        // Render blocks outbound SMTP ports (465, 587) on free tier.
-        // Fallback: return the OTP directly so the evaluator can still test the live app!
-        console.warn(`[DEV MODE] Email blocked by Render. OTP for ${email} is ${otp}`);
-        return res.json({ 
-          message: 'Email blocked by Render firewall. Using dev fallback.', 
-          previewUrl: null,
-          devOtp: otp 
-        });
-      }
-      res.json({ message: 'OTP sent to Gmail successfully', previewUrl: null });
-    } else {
-      // Ethereal is slow, so we do it in the background
-      sendOtpEmail(email, otp, name).then(({ previewUrl }) => {
-        if (previewUrl) {
-          global.emailPreviews[`otp_${email}`] = previewUrl;
-        }
-      }).catch(err => {
-        console.warn(`[DEV MODE] Ethereal failed. OTP for ${email} is ${otp}`);
-      });
-
-      // We still return the devOtp just in case they need to test it instantly
-      res.json({ 
-        message: 'OTP sent successfully',
-        previewUrl: `${req.protocol}://${req.get('host')}/api/auth/otp-preview/${email}`,
-        devOtp: otp
-      });
+    const result = await sendOtpEmail(email, otp, name);
+    if (!result.success) {
+      return res.status(500).json({ error: 'Failed to send OTP email: ' + result.error });
     }
+
+    res.json({ message: 'OTP sent successfully' });
   } catch (error) {
     console.error('Send OTP error:', error);
     res.status(500).json({ error: 'Failed to send OTP' });

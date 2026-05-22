@@ -38,16 +38,7 @@ const SignupPage = () => {
       const data = await res.json();
       if (res.ok) {
         setStep(STEPS.OTP);
-        
-        if (data.devOtp) {
-          // Render blocked the email, so we show the Dev OTP directly
-          setInfo(`Email blocked by Render Firewall. Your test OTP is: ${data.devOtp}`);
-          setOtp(data.devOtp.split(''));
-        } else {
-          setInfo(`OTP sent to ${email}`);
-        }
-        
-        setPreviewUrl(data.previewUrl || '');
+        setInfo(`OTP sent to ${email}`);
         startResendTimer();
       } else {
         setError(data.error || 'Failed to send OTP');
@@ -134,7 +125,6 @@ const SignupPage = () => {
       if (res.ok) {
         setOtp(['', '', '', '', '', '']);
         setInfo('A new OTP has been sent.');
-        setPreviewUrl(data.previewUrl || '');
         startResendTimer();
         otpRefs.current[0]?.focus();
       } else {
@@ -236,13 +226,6 @@ const SignupPage = () => {
 
             {error && <div className={styles.errorAlert}>{error}</div>}
             {info && <div className={styles.successAlert}>{info}</div>}
-
-            {previewUrl && (
-              <div className={styles.previewBox}>
-                📨 <strong>Dev mode:</strong>{' '}
-                <a href={previewUrl} target="_blank" rel="noreferrer">Preview OTP email on Ethereal</a>
-              </div>
-            )}
 
             <form onSubmit={handleVerifyOtp} className={styles.form}>
               <div className={styles.otpInputRow} onPaste={handleOtpPaste}>

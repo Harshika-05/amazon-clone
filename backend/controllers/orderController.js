@@ -64,24 +64,20 @@ exports.placeOrder = async (req, res, next) => {
       return order;
     });
 
-    // Send order confirmation email (fast with static Ethereal credentials)
-    sendOrderConfirmation({
+    // Send order confirmation email
+    const emailResult = await sendOrderConfirmation({
       toEmail: req.user.email,
       orderId: result.id,
       items: result.items,
       totalAmount: result.totalAmount,
       shippingAddress: result.shippingAddress,
-    }).then(emailResult => {
-      if (emailResult && emailResult.previewUrl) {
-        global.emailPreviews[result.id] = emailResult.previewUrl;
-      }
-    }).catch(err => console.error('Order email failed:', err));
-
-    // Return our custom redirect URL instantly (or null if using real Gmail)
-    res.json({ 
-      ...result, 
-      emailPreviewUrl: process.env.GMAIL_USER ? null : `${req.protocol}://${req.get('host')}/api/orders/${result.id}/email-preview` 
     });
+
+    if (!emailResult.success) {
+      console.warn('Order confirmation email failed, but order was placed.');
+    }
+
+    res.json({ ...result });
   } catch (error) {
     next(error);
   }
@@ -190,61 +186,23 @@ exports.cancelOrder = async (req, res, next) => {
       });
     });
 
-    // Send cancellation email (fast with static Ethereal credentials)
-    sendOrderCancellation({
+    // Send cancellation email
+    const emailResult = await sendOrderCancellation({
       toEmail: req.user.email,
       orderId: cancelled.id,
       items: cancelled.items,
       totalAmount: cancelled.totalAmount,
       reason: reason || 'No reason provided',
-    }).then(emailResult => {
-      if (emailResult && emailResult.previewUrl) {
-        global.emailPreviews[`cancel_${cancelled.id}`] = emailResult.previewUrl;
-      }
-    }).catch(err => console.error('Cancel email failed:', err));
-
-    // Return our custom redirect URL instantly (or null if using real Gmail)
-    res.json({ 
-      ...cancelled, 
-      emailPreviewUrl: process.env.GMAIL_USER ? null : `${req.protocol}://${req.get('host')}/api/orders/cancel_${cancelled.id}/email-preview` 
     });
+
+    if (!emailResult.success) {
+      console.warn('Order cancellation email failed, but order was cancelled.');
+    }
+
+    res.json({ ...cancelled });
   } catch (error) {
     next(error);
   }
 };
 
-// ─── Email Preview Redirect ───────────────────────────────────────────────────
-// This endpoint is opened in a new tab by the frontend.
-// It waits until the email is sent (by checking the global store), then redirects.
-exports.getEmailPreview = (req, res) => {
-  const { id } = req.params;
-  const url = global.emailPreviews[id];
-
-  if (url) {
-    return res.redirect(url);
-  }
-
-  // If email is still being generated, show a loading page that auto-refreshes
-  res.send(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta http-equiv="refresh" content="2">
-        <title>Loading Email Preview...</title>
-        <style>
-          body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f3f3f3; margin: 0; }
-          .loader { text-align: center; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-          .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #ff9900; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px auto; }
-          @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        </style>
-      </head>
-      <body>
-        <div class="loader">
-          <div class="spinner"></div>
-          <h2>Generating Email Preview...</h2>
-          <p style="color: #666;">This may take a few seconds.</p>
-        </div>
-      </body>
-    </html>
-  `);
-};
+// Email preview logic removed

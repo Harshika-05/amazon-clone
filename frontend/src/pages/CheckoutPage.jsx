@@ -36,11 +36,6 @@ const CheckoutPage = () => {
       clearCart();
       await fetchUser(); // Refresh user object to get the new defaultAddress
 
-      // Save email preview URL for the confirmation page
-      if (response.data.emailPreviewUrl) {
-        sessionStorage.setItem('emailPreviewUrl', response.data.emailPreviewUrl);
-      }
-
       navigate(`/order/${response.data.id}`);
     } catch (error) {
       console.error('Order failed:', error);
