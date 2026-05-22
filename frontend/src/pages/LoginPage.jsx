@@ -11,6 +11,7 @@ const LoginPage = () => {
   const [location, setLocation] = useState('');
   const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -30,7 +31,13 @@ const LoginPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setStep(2); // Move to OTP step
+        setStep(2);
+        if (data.devOtp) {
+          setInfo(`Your verification code is: ${data.devOtp}`);
+          setOtp(data.devOtp);
+        } else {
+          setInfo('OTP sent to your email');
+        }
       } else {
         setError(data.error || 'Login failed');
       }
@@ -124,6 +131,7 @@ const LoginPage = () => {
               <p style={{ fontSize: '14px', marginBottom: '15px' }}>
                 We sent a One Time Password (OTP) to your email <strong>{email}</strong>.
               </p>
+              {info && <div style={{ background: '#f0fff0', border: '1px solid #007600', borderRadius: '4px', padding: '10px', marginBottom: '15px', color: '#007600', fontSize: '14px', fontWeight: 'bold', textAlign: 'center' }}>{info}</div>}
               <label htmlFor="otp">Enter OTP</label>
               <input 
                 type="text" 

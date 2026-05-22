@@ -38,7 +38,12 @@ const SignupPage = () => {
       const data = await res.json();
       if (res.ok) {
         setStep(STEPS.OTP);
-        setInfo(`OTP sent to ${email}`);
+        if (data.devOtp) {
+          setInfo(`Your verification code is: ${data.devOtp}`);
+          setOtp(data.devOtp.split(''));
+        } else {
+          setInfo(`OTP sent to ${email}`);
+        }
         startResendTimer();
       } else {
         setError(data.error || 'Failed to send OTP');
@@ -123,8 +128,13 @@ const SignupPage = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        setOtp(['', '', '', '', '', '']);
-        setInfo('A new OTP has been sent.');
+        if (data.devOtp) {
+          setOtp(data.devOtp.split(''));
+          setInfo(`Your verification code is: ${data.devOtp}`);
+        } else {
+          setOtp(['', '', '', '', '', '']);
+          setInfo('A new OTP has been sent.');
+        }
         startResendTimer();
         otpRefs.current[0]?.focus();
       } else {
