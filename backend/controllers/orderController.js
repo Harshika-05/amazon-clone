@@ -64,36 +64,24 @@ exports.placeOrder = async (req, res, next) => {
       return order;
     });
 
-    if (process.env.GMAIL_USER) {
-      // Gmail is fast, await it to catch errors
-      const emailResult = await sendOrderConfirmation({
-        toEmail: req.user.email,
-        orderId: result.id,
-        items: result.items,
-        totalAmount: result.totalAmount,
-        shippingAddress: result.shippingAddress,
-      });
-      res.json({ ...result, emailPreviewUrl: null });
-    } else {
-      // Send order confirmation email (fast with static Ethereal credentials)
-      sendOrderConfirmation({
-        toEmail: req.user.email,
-        orderId: result.id,
-        items: result.items,
-        totalAmount: result.totalAmount,
-        shippingAddress: result.shippingAddress,
-      }).then(emailResult => {
-        if (emailResult && emailResult.previewUrl) {
-          global.emailPreviews[result.id] = emailResult.previewUrl;
-        }
-      }).catch(err => console.error('Order email failed:', err));
+    // Send order confirmation email (fast with static Ethereal credentials)
+    sendOrderConfirmation({
+      toEmail: req.user.email,
+      orderId: result.id,
+      items: result.items,
+      totalAmount: result.totalAmount,
+      shippingAddress: result.shippingAddress,
+    }).then(emailResult => {
+      if (emailResult && emailResult.previewUrl) {
+        global.emailPreviews[result.id] = emailResult.previewUrl;
+      }
+    }).catch(err => console.error('Order email failed:', err));
 
-      // Return our custom redirect URL instantly
-      res.json({ 
-        ...result, 
-        emailPreviewUrl: `${req.protocol}://${req.get('host')}/api/orders/${result.id}/email-preview` 
-      });
-    }
+    // Return our custom redirect URL instantly (or null if using real Gmail)
+    res.json({ 
+      ...result, 
+      emailPreviewUrl: process.env.GMAIL_USER ? null : `${req.protocol}://${req.get('host')}/api/orders/${result.id}/email-preview` 
+    });
   } catch (error) {
     next(error);
   }
@@ -202,36 +190,24 @@ exports.cancelOrder = async (req, res, next) => {
       });
     });
 
-    if (process.env.GMAIL_USER) {
-      // Gmail is fast, await it
-      const emailResult = await sendOrderCancellation({
-        toEmail: req.user.email,
-        orderId: cancelled.id,
-        items: cancelled.items,
-        totalAmount: cancelled.totalAmount,
-        reason: reason || 'No reason provided',
-      });
-      res.json({ ...cancelled, emailPreviewUrl: null });
-    } else {
-      // Send cancellation email (fast with static Ethereal credentials)
-      sendOrderCancellation({
-        toEmail: req.user.email,
-        orderId: cancelled.id,
-        items: cancelled.items,
-        totalAmount: cancelled.totalAmount,
-        reason: reason || 'No reason provided',
-      }).then(emailResult => {
-        if (emailResult && emailResult.previewUrl) {
-          global.emailPreviews[`cancel_${cancelled.id}`] = emailResult.previewUrl;
-        }
-      }).catch(err => console.error('Cancel email failed:', err));
+    // Send cancellation email (fast with static Ethereal credentials)
+    sendOrderCancellation({
+      toEmail: req.user.email,
+      orderId: cancelled.id,
+      items: cancelled.items,
+      totalAmount: cancelled.totalAmount,
+      reason: reason || 'No reason provided',
+    }).then(emailResult => {
+      if (emailResult && emailResult.previewUrl) {
+        global.emailPreviews[`cancel_${cancelled.id}`] = emailResult.previewUrl;
+      }
+    }).catch(err => console.error('Cancel email failed:', err));
 
-      // Return our custom redirect URL instantly
-      res.json({ 
-        ...cancelled, 
-        emailPreviewUrl: `${req.protocol}://${req.get('host')}/api/orders/cancel_${cancelled.id}/email-preview` 
-      });
-    }
+    // Return our custom redirect URL instantly (or null if using real Gmail)
+    res.json({ 
+      ...cancelled, 
+      emailPreviewUrl: process.env.GMAIL_USER ? null : `${req.protocol}://${req.get('host')}/api/orders/cancel_${cancelled.id}/email-preview` 
+    });
   } catch (error) {
     next(error);
   }
