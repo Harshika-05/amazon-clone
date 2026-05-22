@@ -65,7 +65,7 @@ const OrderHistoryPage = () => {
     if (!selectedReason) return showToast('Please select a cancellation reason', 'error');
     setCancelling(true);
     try {
-      await axios.patch(
+      const res = await axios.patch(
         `${API_BASE_URL}/api/orders/${cancelModal.id}/cancel`,
         { reason: selectedReason },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -79,7 +79,12 @@ const OrderHistoryPage = () => {
         )
       );
       setCancelModal(null);
-      showToast('Your order has been cancelled successfully', 'success');
+      showToast('Order cancelled successfully!', 'success');
+
+      // Open cancellation email preview in new tab
+      if (res.data.emailPreviewUrl) {
+        window.open(res.data.emailPreviewUrl, '_blank');
+      }
     } catch (err) {
       showToast(err.response?.data?.error || 'Failed to cancel order', 'error');
     } finally {

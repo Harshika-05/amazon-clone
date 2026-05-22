@@ -61,16 +61,16 @@ exports.placeOrder = async (req, res, next) => {
       return order;
     });
 
-    // Send order confirmation email in background (non-blocking)
-    sendOrderConfirmation({
+    // Send order confirmation email
+    const emailResult = await sendOrderConfirmation({
       toEmail: req.user.email,
       orderId: result.id,
       items: result.items,
       totalAmount: result.totalAmount,
       shippingAddress: result.shippingAddress,
-    }).catch(err => console.error('Order email failed:', err));
+    });
 
-    res.json(result);
+    res.json({ ...result, emailPreviewUrl: emailResult.previewUrl });
   } catch (error) {
     next(error);
   }
@@ -179,16 +179,16 @@ exports.cancelOrder = async (req, res, next) => {
       });
     });
 
-    // Send cancellation email in background (non-blocking)
-    sendOrderCancellation({
+    // Send cancellation email
+    const emailResult = await sendOrderCancellation({
       toEmail: req.user.email,
       orderId: cancelled.id,
       items: cancelled.items,
       totalAmount: cancelled.totalAmount,
       reason: reason || 'No reason provided',
-    }).catch(err => console.error('Cancellation email failed:', err));
+    });
 
-    res.json(cancelled);
+    res.json({ ...cancelled, emailPreviewUrl: emailResult.previewUrl });
   } catch (error) {
     next(error);
   }
