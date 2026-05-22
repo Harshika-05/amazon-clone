@@ -119,7 +119,7 @@ erDiagram
     }
     Cart {
         String id PK
-        String userId FK UK
+        String userId FK "unique"
     }
     CartItem {
         String id PK
@@ -129,7 +129,7 @@ erDiagram
     }
     Wishlist {
         String id PK
-        String userId FK UK
+        String userId FK "unique"
     }
     WishlistItem {
         String id PK
