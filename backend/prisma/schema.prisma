@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Configured for PostgreSQL
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(uuid())
+  name           String
+  email          String    @unique
+  password       String
+  defaultAddress String?
+  cart           Cart?
+  orders         Order[]
+  wishlist       Wishlist?
+  reviews        Review[]
+}
+
+model Category {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  products Product[]
+}
+
+model Product {
+  id            String         @id @default(uuid())
+  name          String
+  description   String
+  price         Float
+  stock         Int
+  categoryId    String
+  category      Category       @relation(fields: [categoryId], references: [id])
+  images        ProductImage[]
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+  wishlistItems WishlistItem[]
+  reviews       Review[]
+}
+
+model ProductImage {
+  id        String  @id @default(uuid())
+  url       String
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Cart {
+  id      String     @id @default(uuid())
+  userId  String     @unique
+  user    User       @relation(fields: [userId], references: [id])
+  items   CartItem[]
+}
+
+model CartItem {
+  id        String  @id @default(uuid())
+  cartId    String
+  cart      Cart    @relation(fields: [cartId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int     @default(1)
+}
+
+model Order {
+  id                 String      @id @default(uuid())
+  userId             String
+  user               User        @relation(fields: [userId], references: [id])
+  totalAmount        Float
+  shippingAddress    String
+  status             String      @default("PENDING") // PENDING, SHIPPED, DELIVERED, CANCELLED
+  cancellationReason String?
+  createdAt          DateTime    @default(now())
+  items              OrderItem[]
+}
+
+model OrderItem {
+  id              String  @id @default(uuid())
+  orderId         String
+  order           Order   @relation(fields: [orderId], references: [id])
+  productId       String
+  product         Product @relation(fields: [productId], references: [id])
+  quantity        Int
+  priceAtPurchase Float
+}
+
+model Wishlist {
+  id      String         @id @default(uuid())
+  userId  String         @unique
+  user    User           @relation(fields: [userId], references: [id])
+  items   WishlistItem[]
+}
+
+model WishlistItem {
+  id         String   @id @default(uuid())
+  wishlistId String
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id])
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([wishlistId, productId])
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int      // 1 to 5
+  comment   String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId]) // One review per user per product
+}
+
+model OtpVerification {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  otp       String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}

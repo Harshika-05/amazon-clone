@@ -1,0 +1,98 @@
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 400;
+  margin-bottom: 20px;
+}
+
+.checkoutLayout {
+  display: flex;
+  gap: 20px;
+}
+
+.formSection {
+  flex: 2;
+  background-color: white;
+  padding: 20px;
+  border-radius: 4px;
+}
+
+.formGroup {
+  margin-bottom: 15px;
+}
+
+.label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--amazon-border);
+  border-radius: 4px;
+}
+
+.summarySection {
+  flex: 1;
+  background-color: white;
+  padding: 20px;
+  border-radius: 4px;
+  height: fit-content;
+  border: 1px solid var(--amazon-border);
+}
+
+.summaryTitle {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.placeOrderBtn {
+  width: 100%;
+  background-color: var(--amazon-yellow);
+  border: 1px solid #a88734;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+.placeOrderBtn:hover {
+  background-color: var(--amazon-yellow-hover);
+}
+
+.placeOrderBtn:disabled {
+  background-color: #f3f3f3;
+  color: #999;
+  border-color: #ddd;
+  cursor: not-allowed;
+}
+
+.orderTotal {
+  font-size: 18px;
+  font-weight: bold;
+  color: #B12704;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--amazon-border);
+}
+
+/* Responsive Styles */
+@media (max-width: 900px) {
+  .checkoutLayout {
+    flex-direction: column;
+  }
+  
+  .summarySection {
+    order: -1; /* Put summary above address form on mobile */
+  }
+}

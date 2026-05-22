@@ -1,0 +1,138 @@
+.footerContainer {
+  margin-top: auto;
+  font-family: Arial, sans-serif;
+  color: white;
+}
+
+.backToTop {
+  background-color: var(--amazon-navy-light);
+  padding: 15px 0;
+  text-align: center;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.backToTop:hover {
+  background-color: #485769;
+}
+
+.footerLinksContainer {
+  background-color: var(--amazon-navy);
+  padding: 40px 0;
+  border-bottom: 1px solid #3a4553;
+}
+
+.footerLinksRow {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  padding: 0 20px;
+}
+
+.footerLinkCol h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.footerLinkCol ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footerLinkCol li {
+  margin-bottom: 10px;
+}
+
+.footerLinkCol a {
+  color: #ddd;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.footerLinkCol a:hover {
+  text-decoration: underline;
+}
+
+.footerBottom {
+  background-color: var(--amazon-navy);
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.footerLogoContainer {
+  margin-bottom: 20px;
+}
+
+.logo {
+  font-size: 26px;
+  font-weight: bold;
+  color: white;
+  line-height: 1;
+}
+
+.logo span {
+  font-size: 14px;
+  margin-left: 2px;
+  font-weight: 400;
+}
+
+.footerCountries {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+  max-width: 800px;
+  margin-bottom: 30px;
+}
+
+.footerCountries a {
+  color: #ddd;
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.footerCountries a:hover {
+  text-decoration: underline;
+}
+
+.footerCopyright {
+  text-align: center;
+  color: #ddd;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.footerCopyright span {
+  margin: 0 10px;
+}
+
+/* Responsive Styles */
+@media (max-width: 900px) {
+  .footerLinksRow {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+  }
+}
+
+@media (max-width: 600px) {
+  .footerLinksRow {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  
+  .footerCountries {
+    display: none; /* Hide country links on mobile to save space */
+  }
+  
+  .footerCopyright span {
+    display: block;
+    margin: 5px 0;
+  }
+}

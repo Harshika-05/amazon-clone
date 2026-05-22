@@ -1,0 +1,276 @@
+.navbarContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar {
+  background-color: var(--amazon-navy);
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  position: relative;
+  z-index: 100;
+  height: 60px;
+}
+
+.logoContainer {
+  display: flex;
+  align-items: center;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.logoContainer:hover {
+  border-color: white;
+}
+
+.logo {
+  font-size: 26px;
+  font-weight: bold;
+  color: white;
+  margin-top: -5px;
+  line-height: 1;
+}
+
+.logo span {
+  color: var(--amazon-orange);
+}
+
+.logoIn {
+  font-size: 14px;
+  margin-left: 2px;
+  margin-top: -15px;
+  color: white;
+  font-weight: 400;
+}
+
+.locationContainer {
+  display: flex;
+  flex-direction: column;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.locationContainer:hover {
+  border-color: white;
+}
+
+.locTop {
+  color: #ccc;
+  font-size: 12px;
+  line-height: 14px;
+  padding-left: 18px;
+}
+
+.locBottom {
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.searchContainer {
+  flex: 1;
+  display: flex;
+  height: 40px;
+  margin: 0 15px;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.searchContainer:focus-within {
+  box-shadow: 0 0 0 2px var(--amazon-orange);
+}
+
+.searchDropdown {
+  background-color: #f3f3f3;
+  color: #555;
+  border: none;
+  border-right: 1px solid #ccc;
+  padding: 0 10px;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+}
+
+.searchDropdown:hover {
+  background-color: #dadada;
+  color: #333;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 7px 10px;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  color: #111;
+}
+
+.searchButton {
+  background-color: var(--amazon-orange);
+  border: none;
+  width: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.searchButton:hover {
+  background-color: var(--amazon-orange-hover);
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.navLink {
+  color: white;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+}
+
+.navLink:hover {
+  border-color: white;
+}
+
+.navLink span:first-child {
+  font-size: 12px;
+  line-height: 14px;
+}
+
+.navLink span:last-child {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.cartContainer {
+  display: flex;
+  align-items: flex-end;
+  color: white;
+  text-decoration: none;
+  position: relative;
+  font-weight: 700;
+  padding: 8px 8px 8px 2px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.cartContainer:hover {
+  border-color: white;
+}
+
+.cartIconWrapper {
+  position: relative;
+}
+
+.cartIcon {
+  margin-top: 5px;
+  color: white;
+}
+
+.cartCount {
+  color: var(--amazon-orange);
+  position: absolute;
+  top: -2px;
+  left: 9px;
+  font-size: 16px;
+  font-weight: 700;
+  width: 20px;
+  text-align: center;
+}
+
+.cartText {
+  margin-bottom: 2px;
+}
+
+/* Secondary Navigation Bar */
+.secondaryNav {
+  background-color: var(--amazon-navy-light);
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 5px 15px;
+  height: 39px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.secondaryNav::-webkit-scrollbar {
+  display: none;
+}
+
+.secNavLink {
+  color: white;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  margin-right: 5px;
+  display: flex;
+  align-items: center;
+}
+
+.secNavLink:hover {
+  border-color: white;
+}
+
+.secMenuIcon {
+  margin-right: 5px;
+}
+
+/* Responsive Styles */
+@media (max-width: 900px) {
+  .locationContainer {
+    display: none; /* Hide location on tablet/mobile */
+  }
+  
+  .navLink span:first-child {
+    display: none; /* Hide "Hello, Guest" and "Returns" text */
+  }
+}
+
+@media (max-width: 600px) {
+  .navbar {
+    padding: 8px;
+    height: auto;
+    flex-wrap: wrap;
+  }
+  
+  .searchContainer {
+    order: 3;
+    width: 100%;
+    margin: 10px 0 0 0;
+    flex: 1 1 100%;
+  }
+  
+  .navLinks {
+    margin-left: auto;
+  }
+  
+  .logoIn {
+    display: none;
+  }
+}
