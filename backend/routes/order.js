@@ -3,6 +3,9 @@ const router = express.Router();
 const orderController = require('../controllers/orderController');
 const authMiddleware = require('../middleware/authMiddleware');
 
+// Public endpoint for email preview redirect
+router.get('/:id/email-preview', orderController.getEmailPreview);
+
 router.use(authMiddleware);
 
 router.post('/', orderController.placeOrder);
