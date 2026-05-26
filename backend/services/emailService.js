@@ -20,6 +20,13 @@ const BREVO_API_KEY = process.env.BREVO_API_KEY || '';
 const SENDER_EMAIL = process.env.SENDER_EMAIL || 'harshikagoyal05@gmail.com';
 const SENDER_NAME = process.env.SENDER_NAME || 'Amazon Clone';
 
+// Log on startup so we know if the key is loaded
+if (BREVO_API_KEY) {
+  console.log(`✅ BREVO_API_KEY loaded (${BREVO_API_KEY.substring(0, 12)}...)`);
+} else {
+  console.warn('⚠️ BREVO_API_KEY is NOT set — emails will not be sent, OTP shown on screen instead');
+}
+
 const formatINR = (amount) => `₹${Number(amount).toLocaleString('en-IN')}`;
 
 async function sendEmail(to, subject, htmlContent) {
@@ -27,6 +34,8 @@ async function sendEmail(to, subject, htmlContent) {
     console.error('❌ BREVO_API_KEY not set! Get one at https://app.brevo.com');
     return { success: false, error: 'BREVO_API_KEY not configured' };
   }
+
+  console.log(`📤 Sending email to ${to} | Subject: ${subject.substring(0, 40)}...`);
 
   try {
     const response = await fetch('https://api.brevo.com/v3/smtp/email', {
