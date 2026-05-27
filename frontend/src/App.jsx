@@ -19,8 +19,8 @@ import { ToastProvider } from './components/common/Toast';
 import './App.css';
 
 function App() {
+  // providers wrap app so any child can access auth/cart/wishlist state
   return (
-    {/* providers wrap app so any child can access auth/cart/wishlist state */}
     <AuthProvider>
       <ToastProvider>
       <WishlistProvider>
