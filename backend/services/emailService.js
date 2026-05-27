@@ -21,6 +21,7 @@ const SENDER_EMAIL = process.env.SENDER_EMAIL || 'harshikagoyal05@gmail.com';
 const SENDER_NAME = process.env.SENDER_NAME || 'Amazon Clone';
 
 // Log on startup so we know if the key is loaded
+// check if api key exists so we can warn in console if it's missing
 if (BREVO_API_KEY) {
   console.log(`✅ BREVO_API_KEY loaded (${BREVO_API_KEY.substring(0, 12)}...)`);
 } else {
@@ -31,6 +32,7 @@ if (BREVO_API_KEY) {
 const formatINR = (amount) => `₹${Number(amount).toLocaleString('en-IN')}`;
 
 // generic email sender via brevo http api
+// handles the actual network request to brevo so other functions don't repeat this logic
 async function sendEmail(to, subject, htmlContent) {
   if (!BREVO_API_KEY) {
     console.error('❌ BREVO_API_KEY not set! Get one at https://app.brevo.com');
@@ -71,6 +73,7 @@ async function sendEmail(to, subject, htmlContent) {
 }
 
 // send 6-digit otp for email verification
+// crafts the html template and injects the 6-digit otp for the signup flow
 async function sendOtpEmail(toEmail, otp, name) {
   return sendEmail(toEmail, `${otp} is your Amazon Clone verification code`, `
     <!DOCTYPE html>
@@ -102,6 +105,7 @@ async function sendOtpEmail(toEmail, otp, name) {
 }
 
 // send order confirmed email with item table
+// generates an html table for all purchased items dynamically before sending
 async function sendOrderConfirmation({ toEmail, orderId, items, totalAmount, shippingAddress }) {
   const itemRows = items.map(item => `
     <tr>
@@ -154,6 +158,7 @@ async function sendOrderConfirmation({ toEmail, orderId, items, totalAmount, shi
 }
 
 // send cancellation email with refund info
+// generates html table for cancelled items and shows refund amount
 async function sendOrderCancellation({ toEmail, orderId, items, totalAmount, reason }) {
   const itemRows = items.map(item => `
     <tr>

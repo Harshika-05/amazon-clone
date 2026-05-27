@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding database with expanded data...');
 
-  // Clear existing data to prevent duplicates on re-run
+  // delete in correct order (child first, then parent) to avoid foreign key constraints
   await prisma.orderItem.deleteMany({});
   await prisma.order.deleteMany({});
   await prisma.cartItem.deleteMany({});
@@ -14,11 +14,14 @@ async function main() {
   await prisma.product.deleteMany({});
   await prisma.category.deleteMany({});
 
-  // Create default user
+  await prisma.category.deleteMany({});
+
+  // 1. generate a default guest user so the app is immediately usable
   const bcrypt = require('bcryptjs');
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash('password123', salt);
 
+  // upsert prevents creating duplicates if we run seed multiple times
   const user = await prisma.user.upsert({
     where: { email: 'guest@amazon-clone.com' },
     update: {},
@@ -30,7 +33,7 @@ async function main() {
     },
   });
 
-  // Create categories
+  // 2. create product categories to filter products by
   const electronics = await prisma.category.create({ data: { name: 'Electronics' } });
   const books = await prisma.category.create({ data: { name: 'Books' } });
   const fashion = await prisma.category.create({ data: { name: 'Fashion' } });
@@ -40,6 +43,7 @@ async function main() {
   // ELECTRONICS (5 products)
   // ═══════════════════════════════════════════
 
+  // 3. populate products. include images dynamically via prisma relations
   await prisma.product.create({
     data: {
       name: 'Sony WH-1000XM5 Wireless Active Noise Cancelling Headphones',
@@ -310,11 +314,13 @@ async function main() {
   console.log('Seeding completed successfully! 17 products across 4 categories.');
 }
 
+// execute the main function and handle any errors
 main()
   .catch((e) => {
     console.error(e);
     process.exit(1);
   })
   .finally(async () => {
+    // always disconnect from db after seeding
     await prisma.$disconnect();
   });
