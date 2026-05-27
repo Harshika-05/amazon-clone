@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import styles from './CartPage.module.css';
 
 const CartPage = () => {
+  // grab all cart state and actions from the global context
   const { cart, updateQuantity, removeFromCart, cartTotal, cartItemCount } = useCart();
   const navigate = useNavigate();
 
@@ -30,6 +31,7 @@ const CartPage = () => {
         <h1 className={styles.title}>Shopping Cart</h1>
         <div className={styles.divider}></div>
 
+        {/* map over all items and render a row for each */}
         {cart.items.map((item) => (
           <div key={item.id} className={styles.cartItem}>
             <img 
@@ -48,6 +50,7 @@ const CartPage = () => {
               
               {/* update item qty, min 1 */}
               <div className={styles.itemActions}>
+                {/* dropdown to change quantity (1-10) */}
                 <select 
                   className={styles.quantitySelect}
                   value={item.quantity}

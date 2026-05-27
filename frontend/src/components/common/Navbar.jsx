@@ -13,7 +13,7 @@ const Navbar = () => {
   const location = useLocation();
   const isFirstRender = useRef(true);
 
-  // Sync searchQuery with URL on load/navigation
+  // sync search bar input with the ?search= url param when page loads
   useEffect(() => {
     if (location.pathname === '/') {
       const params = new URLSearchParams(location.search);
@@ -24,7 +24,7 @@ const Navbar = () => {
     }
   }, [location.search, location.pathname]);
 
-  // Debounce effect
+  // debounce typing — wait 500ms after they stop typing before updating the url to avoid spamming navigation
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -42,6 +42,7 @@ const Navbar = () => {
     return () => clearTimeout(timer);
   }, [searchQuery, navigate, location.pathname, location.search]);
 
+  // figure out what to show for the delivery location (first line)
   const formatLocationTop = () => {
     if (user && user.defaultAddress) {
       const parts = user.defaultAddress.split(',');
@@ -54,6 +55,7 @@ const Navbar = () => {
     return 'Hello';
   };
 
+  // figure out what to show for the delivery location (second line, usually city/state)
   const formatLocationBottom = () => {
     if (user && user.defaultAddress) {
       const parts = user.defaultAddress.split(',');
@@ -65,6 +67,7 @@ const Navbar = () => {
     return 'Select your address';
   };
 
+  // when they hit enter or click the mag glass, push the search query to the url
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {

@@ -40,6 +40,7 @@ export const WishlistProvider = ({ children }) => {
     fetchWishlist();
   }, [token]);
 
+  // add item to db, then fetch full list again to keep ui in sync
   const addToWishlist = async (productId) => {
     if (!token) return showToast('Please login to add items to your wishlist', 'error');
     try {
@@ -54,6 +55,7 @@ export const WishlistProvider = ({ children }) => {
     }
   };
 
+  // delete item from db, then fetch full list again
   const removeFromWishlist = async (productId) => {
     if (!token) return;
     try {
