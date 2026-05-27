@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// Get user's wishlist
+// fetch wishlist with product details + images
 exports.getWishlist = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -18,6 +18,7 @@ exports.getWishlist = async (req, res, next) => {
       }
     });
 
+    // first time? create empty wishlist
     if (!wishlist) {
       wishlist = await prisma.wishlist.create({
         data: { userId },
@@ -31,7 +32,7 @@ exports.getWishlist = async (req, res, next) => {
   }
 };
 
-// Add item to wishlist
+// add product to wishlist
 exports.addToWishlist = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -47,6 +48,7 @@ exports.addToWishlist = async (req, res, next) => {
       });
     }
 
+    // upsert so adding same product twice won't crash
     const wishlistItem = await prisma.wishlistItem.upsert({
       where: {
         wishlistId_productId: {
@@ -67,7 +69,7 @@ exports.addToWishlist = async (req, res, next) => {
   }
 };
 
-// Remove item from wishlist
+// remove product from wishlist
 exports.removeFromWishlist = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -92,7 +94,7 @@ exports.removeFromWishlist = async (req, res, next) => {
 
     res.json({ message: 'Item removed from wishlist' });
   } catch (error) {
-    // If it fails (e.g. not found), just return success anyway
+    // if not found, still return success — no big deal
     res.json({ message: 'Item removed from wishlist' });
   }
 };

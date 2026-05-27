@@ -7,6 +7,7 @@ import { useCart } from '../context/CartContext';
 import styles from './ProductList.module.css';
 import API_BASE_URL from '../config';
 
+// hero banner slides — rotates every 5s
 const HERO_SLIDES = [
   {
     title: 'Mega Home Sale',
@@ -49,6 +50,7 @@ const SORT_OPTIONS = [
 const LIMIT = 12;
 
 const ProductList = () => {
+  // state for products, filters, and loading
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,6 +65,7 @@ const ProductList = () => {
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { addToCart } = useCart();
 
+  // scroll to category section if url has a hash
   useEffect(() => {
     if (location.hash && !loading && categories.length > 0) {
       setTimeout(() => {
@@ -82,6 +85,7 @@ const ProductList = () => {
     setPage(1);
   }, [searchQuery, sortBy]);
 
+  // fetch products from api with current filters
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
@@ -102,7 +106,7 @@ const ProductList = () => {
         setProducts(fetchedProducts);
         setPagination(pag);
 
-        // Group by category for homepage
+        // group products by category for homepage grid
         const categoryMap = {};
         fetchedProducts.forEach((product) => {
           const catName = product.category?.name || 'Other';
@@ -132,7 +136,7 @@ const ProductList = () => {
 
   if (loading) return <div className={styles.loading}>Loading...</div>;
 
-  // ── Search results mode ──
+  // search results mode — different layout than homepage
   if (searchQuery) {
     return (
       <div className={styles.searchSection}>
@@ -257,13 +261,14 @@ const ProductList = () => {
         <div className={styles.gradientFade}></div>
       </div>
 
+      {/* category cards + horizontal product rows */}
       <div className={styles.categorySections}>
-        {/* Category Cards Row */}
         <div className={styles.categoryCardsRow}>
           {categories.map(([catName, catProducts]) => (
             <div key={catName} className={styles.categoryCard}>
               <h2 className={styles.categoryCardTitle}>{catName}</h2>
               <div className={styles.categoryCardGrid}>
+                {/* show max 4 products per category card */}
                 {catProducts.slice(0, 4).map((product) => (
                   <Link to={`/product/${product.id}`} key={product.id} className={styles.categoryCardItem}>
                     <img

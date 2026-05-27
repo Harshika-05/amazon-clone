@@ -16,6 +16,7 @@ const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // step 1 — verify email+password, sends otp to email
   const handleLoginStep1 = async (e) => {
     e.preventDefault();
     setError('');
@@ -32,6 +33,7 @@ const LoginPage = () => {
 
       if (response.ok) {
         setStep(2);
+        // if email service is down, otp shows on screen as fallback
         if (data.devOtp) {
           setInfo(`Your verification code is: ${data.devOtp}`);
           setOtp(data.devOtp);
@@ -48,6 +50,7 @@ const LoginPage = () => {
     }
   };
 
+  // step 2 — verify otp, get jwt token, redirect home
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     setError('');

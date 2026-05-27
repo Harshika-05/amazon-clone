@@ -27,8 +27,10 @@ if (BREVO_API_KEY) {
   console.warn('⚠️ BREVO_API_KEY is NOT set — emails will not be sent, OTP shown on screen instead');
 }
 
+// format price in indian rupees
 const formatINR = (amount) => `₹${Number(amount).toLocaleString('en-IN')}`;
 
+// generic email sender via brevo http api
 async function sendEmail(to, subject, htmlContent) {
   if (!BREVO_API_KEY) {
     console.error('❌ BREVO_API_KEY not set! Get one at https://app.brevo.com');
@@ -68,7 +70,7 @@ async function sendEmail(to, subject, htmlContent) {
   }
 }
 
-// ─── OTP Email ───────────────────────────────────────────────────────────────
+// send 6-digit otp for email verification
 async function sendOtpEmail(toEmail, otp, name) {
   return sendEmail(toEmail, `${otp} is your Amazon Clone verification code`, `
     <!DOCTYPE html>
@@ -99,7 +101,7 @@ async function sendOtpEmail(toEmail, otp, name) {
   `);
 }
 
-// ─── Order Confirmation Email ────────────────────────────────────────────────
+// send order confirmed email with item table
 async function sendOrderConfirmation({ toEmail, orderId, items, totalAmount, shippingAddress }) {
   const itemRows = items.map(item => `
     <tr>
@@ -151,7 +153,7 @@ async function sendOrderConfirmation({ toEmail, orderId, items, totalAmount, shi
   `);
 }
 
-// ─── Order Cancellation Email ────────────────────────────────────────────────
+// send cancellation email with refund info
 async function sendOrderCancellation({ toEmail, orderId, items, totalAmount, reason }) {
   const itemRows = items.map(item => `
     <tr>

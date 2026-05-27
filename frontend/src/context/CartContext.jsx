@@ -14,6 +14,7 @@ export const CartProvider = ({ children }) => {
   const { token } = useAuth();
   const { showToast } = useToast();
 
+  // load cart from server
   const fetchCart = async () => {
     if (!token) {
       setCart({ items: [] });
@@ -39,6 +40,7 @@ export const CartProvider = ({ children }) => {
     fetchCart();
   }, [token]);
 
+  // add product to cart, re-fetch to stay in sync
   const addToCart = async (productId, quantity = 1) => {
     if (!token) return showToast('Please login to add items to cart', 'error');
     try {
@@ -81,7 +83,9 @@ export const CartProvider = ({ children }) => {
     setCart({ items: [] });
   };
 
+  // calculate total price from all items
   const cartTotal = cart.items ? cart.items.reduce((total, item) => total + (item.product.price * item.quantity), 0) : 0;
+  // total number of items (for badge on navbar)
   const cartItemCount = cart.items ? cart.items.reduce((count, item) => count + item.quantity, 0) : 0;
 
   return (

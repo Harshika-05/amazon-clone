@@ -23,7 +23,7 @@ const SignupPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // ── Step 1: Send OTP ──────────────────────────────────────────────────────
+  // step 1 — validate form, request otp for email verification
   const handleSendOtp = async (e) => {
     e.preventDefault();
     setError('');
@@ -55,7 +55,7 @@ const SignupPage = () => {
     }
   };
 
-  // ── Step 2: Verify OTP ───────────────────────────────────────────────────
+  // step 2 — verify otp, create account, auto-login
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     setError('');
@@ -82,7 +82,7 @@ const SignupPage = () => {
     }
   };
 
-  // ── OTP input: auto-advance on digit entry ────────────────────────────────
+  // auto-advance cursor to next box on digit entry
   const handleOtpChange = (index, value) => {
     if (!/^\d*$/.test(value)) return;
     const newOtp = [...otp];
@@ -97,6 +97,7 @@ const SignupPage = () => {
     }
   };
 
+  // handle pasting full 6-digit code
   const handleOtpPaste = (e) => {
     const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
     if (pasted.length === 6) {
@@ -105,7 +106,7 @@ const SignupPage = () => {
     }
   };
 
-  // ── Resend timer ──────────────────────────────────────────────────────────
+  // 30s cooldown so user cant spam resend
   const startResendTimer = () => {
     setResendTimer(30);
     const interval = setInterval(() => {
@@ -116,6 +117,7 @@ const SignupPage = () => {
     }, 1000);
   };
 
+  // resend otp if user didnt receive it
   const handleResend = async () => {
     if (resendTimer > 0) return;
     setError('');

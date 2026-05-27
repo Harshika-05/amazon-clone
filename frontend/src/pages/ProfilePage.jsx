@@ -7,11 +7,13 @@ const ProfilePage = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  // redirect if not logged in
   if (!user) {
     navigate('/login');
     return null;
   }
 
+  // sign out and go back to homepage
   const handleSignOut = () => {
     logout();
     navigate('/');
@@ -55,6 +57,7 @@ const ProfilePage = () => {
         </div>
       </div>
 
+      {/* show logged-in user info */}
       <div className={styles.profileDetailsSection}>
         <h2>Account Settings</h2>
         <div className={styles.detailsBox}>

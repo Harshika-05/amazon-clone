@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// Get all reviews for a product
+// get reviews + calculate avg rating
 exports.getProductReviews = async (req, res, next) => {
   try {
     const { productId } = req.params;
@@ -16,7 +16,7 @@ exports.getProductReviews = async (req, res, next) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    // Calculate average rating
+    // average = sum of ratings / count
     const avgRating = reviews.length > 0
       ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
       : 0;
@@ -31,7 +31,7 @@ exports.getProductReviews = async (req, res, next) => {
   }
 };
 
-// Add or update a review
+// create or update — one review per user per product
 exports.upsertReview = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -60,7 +60,7 @@ exports.upsertReview = async (req, res, next) => {
   }
 };
 
-// Delete a review
+// only owner can delete their review
 exports.deleteReview = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -74,6 +74,7 @@ exports.deleteReview = async (req, res, next) => {
 
     res.json({ message: 'Review deleted successfully' });
   } catch (error) {
+    // prisma error P2025 = record not found
     if (error.code === 'P2025') {
       return res.status(404).json({ error: 'Review not found' });
     }

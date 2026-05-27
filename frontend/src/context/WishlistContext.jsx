@@ -14,6 +14,7 @@ export const WishlistProvider = ({ children }) => {
   const { token } = useAuth();
   const { showToast } = useToast();
 
+  // load wishlist from server
   const fetchWishlist = async () => {
     if (!token) {
       setWishlist({ items: [] });
@@ -66,6 +67,7 @@ export const WishlistProvider = ({ children }) => {
     }
   };
 
+  // check if product already in wishlist (for heart icon toggle)
   const isInWishlist = (productId) => {
     if (!wishlist || !wishlist.items) return false;
     return wishlist.items.some(item => item.productId === productId);

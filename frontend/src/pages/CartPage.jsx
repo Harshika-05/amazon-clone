@@ -7,6 +7,7 @@ const CartPage = () => {
   const { cart, updateQuantity, removeFromCart, cartTotal, cartItemCount } = useCart();
   const navigate = useNavigate();
 
+  // empty cart — show placeholder image
   if (!cart.items || cart.items.length === 0) {
     return (
       <div className={styles.container}>
@@ -45,6 +46,7 @@ const CartPage = () => {
                 ₹{item.product.price.toLocaleString('en-IN')}
               </div>
               
+              {/* update item qty, min 1 */}
               <div className={styles.itemActions}>
                 <select 
                   className={styles.quantitySelect}
@@ -68,6 +70,7 @@ const CartPage = () => {
         ))}
       </div>
 
+      {/* cart total + checkout cta */}
       <div className={styles.summary}>
         <div className={styles.subtotal}>
           Subtotal ({cartItemCount} item{cartItemCount !== 1 ? 's' : ''}): 

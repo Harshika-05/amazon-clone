@@ -18,6 +18,7 @@ const CANCEL_REASONS = [
   'Other reason',
 ];
 
+// color-code status: pending=green, shipped=blue, cancelled=red
 const STATUS_CONFIG = {
   PENDING:   { label: 'Preparing for Dispatch', color: '#007600', dot: '#007600' },
   SHIPPED:   { label: 'Shipped',                color: '#007185', dot: '#007185' },
@@ -26,6 +27,7 @@ const STATUS_CONFIG = {
 };
 
 const OrderHistoryPage = () => {
+  // state for orders, tabs, and cancel modal
   const [orders, setOrders]               = useState([]);
   const [loading, setLoading]             = useState(true);
   const [activeTab, setActiveTab]         = useState('all');
@@ -42,6 +44,7 @@ const OrderHistoryPage = () => {
     fetchOrders();
   }, [token]);
 
+  // load all past orders, newest first
   const fetchOrders = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/orders/history`, {
@@ -55,12 +58,13 @@ const OrderHistoryPage = () => {
     }
   };
 
-  // ── Cancellation ────────────────────────────────────────────────────────────
+  // open cancel modal, send reason to backend
   const openCancelModal = (order) => {
     setSelectedReason('');
     setCancelModal(order);
   };
 
+  // cancel order + restore stock on backend
   const handleCancelOrder = async () => {
     if (!selectedReason) return showToast('Please select a cancellation reason', 'error');
     setCancelling(true);
@@ -88,7 +92,7 @@ const OrderHistoryPage = () => {
     }
   };
 
-  // ── Tab Filtering ────────────────────────────────────────────────────────────
+  // filter orders by tab (all / not shipped / cancelled)
   const filteredOrders = orders.filter(o => {
     if (activeTab === 'all')       return true;
     if (activeTab === 'pending')   return o.status === 'PENDING';

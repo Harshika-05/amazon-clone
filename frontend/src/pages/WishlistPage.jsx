@@ -11,6 +11,7 @@ const WishlistPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // redirect to login if not authenticated
   if (!user) {
     navigate('/login');
     return null;
@@ -20,6 +21,7 @@ const WishlistPage = () => {
     return <div className={styles.loading}>Loading your wishlist...</div>;
   }
 
+  // move from wishlist to cart in one click
   const handleMoveToCart = async (productId) => {
     await addToCart(productId, 1);
     await removeFromWishlist(productId);

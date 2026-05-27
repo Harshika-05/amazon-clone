@@ -15,12 +15,13 @@ const ProductDetail = () => {
   const { addToCart } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
 
+  // product data + image gallery state
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState('');
   const [quantity, setQuantity] = useState(1);
 
-  // Review state
+  // review state — rating, comment, hover effect
   const { user, token } = useAuth();
   const [reviews, setReviews] = useState([]);
   const [avgRating, setAvgRating] = useState(0);
@@ -31,6 +32,7 @@ const ProductDetail = () => {
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewMessage, setReviewMessage] = useState('');
 
+  // load reviews + pre-fill if user already reviewed
   const fetchReviews = useCallback(async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/reviews/${id}`);
@@ -51,6 +53,7 @@ const ProductDetail = () => {
     }
   }, [id, user]);
 
+  // load product details + images
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -73,7 +76,7 @@ const ProductDetail = () => {
   if (loading) return <div className={styles.loading}>Loading…</div>;
   if (!product) return <div className={styles.notFound}>Product not found</div>;
 
-  /* ── Derived values ── */
+  // fake mrp = 40% markup, then calculate discount %
   const price = product.price;
   const mrp = Math.round(price * 1.4);
   const discountPct = Math.round(((mrp - price) / mrp) * 100);
@@ -82,12 +85,14 @@ const ProductDetail = () => {
 
   const formatINR = (n) => Number(n).toLocaleString('en-IN');
 
+  // add selected quantity to cart
   const handleAddToCart = () => addToCart(product.id, quantity);
   const handleBuyNow = () => {
     addToCart(product.id, quantity);
     navigate('/cart');
   };
 
+  // submit new review (1-5 stars + optional comment)
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     if (userRating === 0) return setReviewMessage('Please select a star rating.');
@@ -110,6 +115,7 @@ const ProductDetail = () => {
     }
   };
 
+  // let user delete their own review
   const handleDeleteReview = async () => {
     try {
       await axios.delete(`${API_BASE_URL}/api/reviews/${id}`, {
@@ -124,6 +130,7 @@ const ProductDetail = () => {
     }
   };
 
+  // render filled/empty stars based on rating
   const renderStars = (rating) => {
     const full = Math.floor(rating);
     const half = rating - full >= 0.5 ? 1 : 0;
@@ -314,7 +321,7 @@ const ProductDetail = () => {
       </div>
       </div>
 
-      {/* ════════ REVIEWS SECTION ════════ */}
+      {/* reviews section — shows avg rating + all reviews */}
       <div className={styles.reviewsSection}>
         <h2 className={styles.reviewsTitle}>Customer Reviews</h2>
         <div className={styles.reviewsSummary}>

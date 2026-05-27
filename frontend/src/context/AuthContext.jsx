@@ -1,15 +1,19 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import API_BASE_URL from '../config';
 
+// global auth state — login/logout accessible from anywhere
 const AuthContext = createContext();
 
+// shortcut hook so pages dont need to import useContext
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  // persist token across page refresh
   const [token, setToken] = useState(localStorage.getItem('token') || null);
   const [loading, setLoading] = useState(true);
 
+  // on load, check if saved token is still valid
   const fetchUser = async () => {
     if (!token) {
       setLoading(false);
@@ -41,12 +45,14 @@ export const AuthProvider = ({ children }) => {
     fetchUser();
   }, [token]);
 
+  // save user + token to state and localStorage
   const login = (userData, authToken) => {
     setUser(userData);
     setToken(authToken);
     localStorage.setItem('token', authToken);
   };
 
+  // clear everything on logout
   const logout = () => {
     setUser(null);
     setToken(null);

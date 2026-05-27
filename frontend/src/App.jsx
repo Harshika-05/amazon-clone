@@ -20,6 +20,7 @@ import './App.css';
 
 function App() {
   return (
+    {/* providers wrap app so any child can access auth/cart/wishlist state */}
     <AuthProvider>
       <ToastProvider>
       <WishlistProvider>
@@ -28,6 +29,7 @@ function App() {
             <div className="app">
               <Navbar />
               <main className="main-content">
+                {/* each route maps a url to a page component */}
                 <Routes>
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/signup" element={<SignupPage />} />

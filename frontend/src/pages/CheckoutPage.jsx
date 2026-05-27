@@ -10,6 +10,7 @@ const CheckoutPage = () => {
   const { cart, cartTotal, cartItemCount, clearCart } = useCart();
   const { token, fetchUser } = useAuth();
   const navigate = useNavigate();
+  // shipping address fields — could pre-fill if user has saved address
   const [address, setAddress] = useState({
     fullName: '',
     street: '',
@@ -19,6 +20,7 @@ const CheckoutPage = () => {
   });
   const [loading, setLoading] = useState(false);
 
+  // place order with shipping address, redirect to confirmation
   const handlePlaceOrder = async () => {
     if (!address.fullName || !address.street || !address.city || !address.zipCode) {
       alert("Please fill in all required fields.");
@@ -34,7 +36,7 @@ const CheckoutPage = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       clearCart();
-      await fetchUser(); // Refresh user object to get the new defaultAddress
+      await fetchUser(); // refresh user to get the new defaultAddress
 
       navigate(`/order/${response.data.id}`);
     } catch (error) {
@@ -127,6 +129,7 @@ const CheckoutPage = () => {
           </div>
         </div>
 
+        {/* order summary sidebar — total + place order btn */}
         <div className={styles.summarySection}>
           <button 
             className={styles.placeOrderBtn}

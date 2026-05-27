@@ -1,9 +1,11 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+// list products w/ search, filter, sort, pagination
 exports.getProducts = async (req, res, next) => {
   try {
     const { search, category, sortBy, sortOrder, page, limit, minPrice, maxPrice } = req.query;
+    // build where clause from query params
     let filter = {};
 
     if (search) {
@@ -38,6 +40,7 @@ exports.getProducts = async (req, res, next) => {
     const pageSize = parseInt(limit) || 20;
     const skip = (pageNum - 1) * pageSize;
 
+    // run count + fetch in parallel for speed
     const [products, totalCount] = await Promise.all([
       prisma.product.findMany({
         where: filter,
@@ -66,6 +69,7 @@ exports.getProducts = async (req, res, next) => {
   }
 };
 
+// single product with images and category
 exports.getProductById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -87,6 +91,7 @@ exports.getProductById = async (req, res, next) => {
   }
 };
 
+// all categories for the sidebar filter
 exports.getCategories = async (req, res, next) => {
   try {
     const categories = await prisma.category.findMany();

@@ -4,9 +4,10 @@ const prisma = new PrismaClient();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'amazon-clone-super-secret-key-2026';
 
+// block requests that don't have a valid jwt
 const authMiddleware = async (req, res, next) => {
   try {
-    // Get token from header
+    // pull bearer token from auth header
     const authHeader = req.header('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'No token, authorization denied' });
@@ -14,10 +15,10 @@ const authMiddleware = async (req, res, next) => {
 
     const token = authHeader.replace('Bearer ', '');
 
-    // Verify token
+    // decode and verify jwt hasn't expired
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    // Find user
+    // make sure user still exists in db
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId }
     });
@@ -26,7 +27,7 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ error: 'User not found, authorization denied' });
     }
 
-    // Attach user to request
+    // attach user so downstream routes can use req.user
     req.user = user;
     next();
   } catch (error) {

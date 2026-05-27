@@ -6,10 +6,12 @@ require('dotenv').config();
 const app = express();
 const prisma = new PrismaClient();
 
+// allow frontend to call our api
 app.use(cors());
+// parse incoming json bodies
 app.use(express.json());
 
-// Health check endpoint (used by keep-alive ping to prevent Render AND Neon DB cold starts)
+// keeps render + neon db from sleeping on free tier
 app.get('/health', async (req, res) => {
   try {
     // Ping the database to keep Neon Postgres awake
@@ -20,11 +22,9 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// Auth routes
+// --- register all api routes ---
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
-
-// Import Routes
 const productRoutes = require('./routes/product');
 const cartRoutes = require('./routes/cart');
 const orderRoutes = require('./routes/order');
@@ -37,7 +37,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/reviews', reviewRoutes);
 
-// Error handling middleware
+// catch-all for unhandled errors
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });

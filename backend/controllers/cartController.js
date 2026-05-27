@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+// fetch cart with product details + images
 exports.getCart = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -19,6 +20,7 @@ exports.getCart = async (req, res, next) => {
       }
     });
 
+    // first time? create empty cart
     if (!cart) {
       cart = await prisma.cart.create({
         data: { userId },
@@ -42,6 +44,7 @@ exports.addToCart = async (req, res, next) => {
       cart = await prisma.cart.create({ data: { userId } });
     }
 
+    // if already in cart, bump quantity instead of duplicating
     const existingItem = await prisma.cartItem.findFirst({
       where: {
         cartId: cart.id,
@@ -70,6 +73,7 @@ exports.addToCart = async (req, res, next) => {
   }
 };
 
+// change quantity of a specific cart item
 exports.updateCartItem = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -86,6 +90,7 @@ exports.updateCartItem = async (req, res, next) => {
   }
 };
 
+// delete one item from cart
 exports.removeFromCart = async (req, res, next) => {
   try {
     const { id } = req.params;

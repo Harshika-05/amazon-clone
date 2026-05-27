@@ -11,6 +11,7 @@ const OrderConfirmation = () => {
 
   const { token } = useAuth();
 
+  // load newly placed order details
   useEffect(() => {
     const fetchOrder = async () => {
       if (!token) return;
@@ -28,8 +29,7 @@ const OrderConfirmation = () => {
     fetchOrder();
   }, [id, token]);
 
-  // Get emailPreviewUrl from sessionStorage (set during checkout)
-  // Removed, we no longer use it as we use real SMTP
+  // email confirmation handled by backend via brevo smtp now
 
   return (
     <div style={{ maxWidth: '800px', margin: '40px auto', padding: '20px' }}>

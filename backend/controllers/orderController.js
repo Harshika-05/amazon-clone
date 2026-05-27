@@ -2,9 +2,9 @@ const { PrismaClient } = require('@prisma/client');
 const { sendOrderConfirmation, sendOrderCancellation } = require('../services/emailService');
 const prisma = new PrismaClient();
 
-// Global store for in-memory email preview URLs
-global.emailPreviews = global.emailPreviews || {};
 
+
+// convert cart into an order + clear the cart
 exports.placeOrder = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -29,11 +29,11 @@ exports.placeOrder = async (req, res, next) => {
       return {
         productId: item.productId,
         quantity: item.quantity,
-        priceAtPurchase: item.product.price
+        priceAtPurchase: item.product.price // lock price at purchase time
       };
     });
 
-    // Create Order and clear cart in a transaction
+    // transaction — both order+clear happen together or neither
     const result = await prisma.$transaction(async (prisma) => {
       const order = await prisma.order.create({
         data: {
@@ -55,7 +55,7 @@ exports.placeOrder = async (req, res, next) => {
         where: { cartId: cart.id }
       });
 
-      // Update user's default address
+      // save shipping address as default for next time
       await prisma.user.update({
         where: { id: userId },
         data: { defaultAddress: shippingAddress }
@@ -83,6 +83,7 @@ exports.placeOrder = async (req, res, next) => {
   }
 };
 
+// get single order with product images
 exports.getOrderById = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -103,7 +104,7 @@ exports.getOrderById = async (req, res, next) => {
       return res.status(404).json({ error: 'Order not found' });
     }
 
-    // Ensure user owns order
+    // make sure user owns this order
     if (order.userId !== req.user.id) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
@@ -114,6 +115,7 @@ exports.getOrderById = async (req, res, next) => {
   }
 };
 
+// all orders, newest first
 exports.getOrderHistory = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -133,9 +135,8 @@ exports.getOrderHistory = async (req, res, next) => {
   }
 };
 
-// ─── Cancel Order ─────────────────────────────────────────────────────────────
-// Amazon rule: only PENDING orders (not yet shipped) can be cancelled.
-// Stock is restored atomically in a transaction.
+// ─── cancel order ─────────────────────────────────────────────────────────────
+// cancel — only if still pending, restore stock atomically
 exports.cancelOrder = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -151,21 +152,20 @@ exports.cancelOrder = async (req, res, next) => {
       return res.status(404).json({ error: 'Order not found' });
     }
 
-    // Ownership check
+    // only the buyer can cancel
     if (order.userId !== req.user.id) {
       return res.status(403).json({ error: 'You are not authorised to cancel this order' });
     }
 
-    // Only PENDING orders can be cancelled (Amazon rule: once shipped, no cancellation)
+    // only pending can be cancelled
     if (order.status !== 'PENDING') {
       return res.status(400).json({
         error: `This order cannot be cancelled because it is already ${order.status.toLowerCase()}.`
       });
     }
 
-    // Cancel order and restore stock in a single atomic transaction
     const cancelled = await prisma.$transaction(async (tx) => {
-      // Restore stock for every item
+      // give back stock for each item
       for (const item of order.items) {
         await tx.product.update({
           where: { id: item.productId },
@@ -173,7 +173,7 @@ exports.cancelOrder = async (req, res, next) => {
         });
       }
 
-      // Update order status to CANCELLED and store the reason
+      // mark as cancelled
       return tx.order.update({
         where: { id },
         data: {
@@ -186,7 +186,7 @@ exports.cancelOrder = async (req, res, next) => {
       });
     });
 
-    // Send cancellation email
+    // notify user via email
     const emailResult = await sendOrderCancellation({
       toEmail: req.user.email,
       orderId: cancelled.id,
@@ -205,4 +205,3 @@ exports.cancelOrder = async (req, res, next) => {
   }
 };
 
-// Email preview logic removed

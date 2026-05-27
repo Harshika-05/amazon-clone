@@ -6,9 +6,7 @@ const { sendOtpEmail } = require('../services/emailService');
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'amazon-clone-super-secret-key-2026';
 
-global.emailPreviews = global.emailPreviews || {};
-
-// Register a new user
+// register — create new account
 const register = async (req, res) => {
   try {
     const { name, email, password, location } = req.body;
@@ -17,7 +15,7 @@ const register = async (req, res) => {
       return res.status(400).json({ error: 'Please provide all required fields' });
     }
 
-    // Check if user exists
+    // check if email is already taken
     const existingUser = await prisma.user.findUnique({
       where: { email }
     });
@@ -26,7 +24,7 @@ const register = async (req, res) => {
       return res.status(400).json({ error: 'User already exists' });
     }
 
-    // Hash password
+    // 10 salt rounds for secure hashing
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -40,7 +38,7 @@ const register = async (req, res) => {
       }
     });
 
-    // Create JWT
+    // token valid for 7 days
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
 
     res.status(201).json({
@@ -58,7 +56,7 @@ const register = async (req, res) => {
   }
 };
 
-// Login Step 1: Verify credentials and send OTP
+// login step 1 — check creds and send otp
 const login = async (req, res) => {
   try {
     const { email, password, location } = req.body;
@@ -67,7 +65,7 @@ const login = async (req, res) => {
       return res.status(400).json({ error: 'Please provide email and password' });
     }
 
-    // Find user
+    // find user by email
     const user = await prisma.user.findUnique({
       where: { email }
     });
@@ -76,27 +74,26 @@ const login = async (req, res) => {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    // Check password
+    // compare hashed pw
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    // Generate 6-digit OTP
+    // always gives 6 digits (100000-999999)
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    // Upsert into OtpVerification table
+    // upsert = update if exists, create if not
     await prisma.otpVerification.upsert({
       where: { email },
       update: { otp, expiresAt },
       create: { email, otp, expiresAt }
     });
 
-    // Send OTP via email
     const result = await sendOtpEmail(email, otp, user.name);
     if (!result.success) {
-      // Email failed — return OTP directly so user can still proceed
+      // fallback — if email fails, show otp on screen
       console.warn(`Email delivery failed for ${email}, returning OTP in response`);
       return res.json({ message: 'OTP generated (check below)', devOtp: otp });
     }
@@ -108,7 +105,7 @@ const login = async (req, res) => {
   }
 };
 
-// Login Step 2: Verify OTP and return token
+// login step 2 — verify otp and issue token
 const verifyLoginOtp = async (req, res) => {
   try {
     const { email, otp, location } = req.body;
@@ -117,32 +114,32 @@ const verifyLoginOtp = async (req, res) => {
       return res.status(400).json({ error: 'Please provide email and OTP' });
     }
 
-    // Find OTP record
+    // look up the otp we stored earlier
     const record = await prisma.otpVerification.findUnique({ where: { email } });
     if (!record) return res.status(400).json({ error: 'No OTP found for this email' });
 
-    // Check expiry
+    // expired? delete it and bail
     if (new Date() > record.expiresAt) {
       await prisma.otpVerification.delete({ where: { email } });
       return res.status(400).json({ error: 'OTP has expired' });
     }
 
-    // Check OTP match
+    // wrong otp
     if (record.otp !== otp) {
       return res.status(400).json({ error: 'Incorrect OTP' });
     }
 
-    // Find user
+    // grab user for the jwt payload
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return res.status(400).json({ error: 'User not found' });
 
-    // Clean up the OTP record
+    // otp used, delete it
     await prisma.otpVerification.delete({ where: { email } });
 
-    // Create JWT
+    // token valid for 7 days
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
 
-    // Update location if provided
+    // save location if user allowed it
     let updatedAddress = user.defaultAddress;
     if (location) {
       await prisma.user.update({
@@ -167,7 +164,7 @@ const verifyLoginOtp = async (req, res) => {
   }
 };
 
-// Get current user profile
+// get logged-in user's profile
 const getMe = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
@@ -190,7 +187,7 @@ const getMe = async (req, res) => {
   }
 };
 
-// Ethereal removed, no preview needed
+
 
 module.exports = {
   register,
@@ -202,7 +199,7 @@ module.exports = {
   testEmailConfig
 };
 
-// ─── Test Email Config ────────────────────────────────────────────────────────
+// ─── test email config ───────────────────────────────────────────────────────
 async function testEmailConfig(req, res) {
   try {
     if (!process.env.BREVO_API_KEY) {
@@ -225,31 +222,30 @@ async function testEmailConfig(req, res) {
   }
 }
 
-// ─── Send OTP ────────────────────────────────────────────────────────────────
+// ─── send otp (signup step 1) ────────────────────────────────────────────────
 async function sendOtp(req, res) {
   try {
     const { email, name } = req.body;
     if (!email || !name) return res.status(400).json({ error: 'Name and email are required' });
 
-    // Check if email is already registered
+    // make sure email isn't already taken
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return res.status(400).json({ error: 'An account with this email already exists' });
 
-    // Generate 6-digit OTP
+    // always gives 6 digits (100000-999999)
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    // Upsert into OtpVerification table
+    // upsert = update if exists, create if not
     await prisma.otpVerification.upsert({
       where: { email },
       update: { otp, expiresAt },
       create: { email, otp, expiresAt }
     });
 
-    // Send OTP via email
     const result = await sendOtpEmail(email, otp, name);
     if (!result.success) {
-      // Email failed — return OTP directly so user can still proceed
+      // fallback — if email fails, show otp on screen
       console.warn(`Email delivery failed for ${email}, returning OTP in response`);
       return res.json({ message: 'OTP generated (check below)', devOtp: otp });
     }
@@ -261,7 +257,7 @@ async function sendOtp(req, res) {
   }
 }
 
-// ─── Verify OTP & Complete Registration ──────────────────────────────────────
+// ─── signup step 2 — verify otp and create account ──────────────────────────
 async function verifyOtp(req, res) {
   try {
     const { name, email, password, location, otp } = req.body;
@@ -269,22 +265,23 @@ async function verifyOtp(req, res) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    // Find OTP record
+    // look up stored otp
     const record = await prisma.otpVerification.findUnique({ where: { email } });
     if (!record) return res.status(400).json({ error: 'No OTP found for this email. Please request a new one.' });
 
-    // Check expiry
+    // expired? delete and reject
     if (new Date() > record.expiresAt) {
       await prisma.otpVerification.delete({ where: { email } });
       return res.status(400).json({ error: 'OTP has expired. Please request a new one.' });
     }
 
-    // Check OTP match
+    // wrong otp
     if (record.otp !== otp) {
       return res.status(400).json({ error: 'Incorrect OTP. Please try again.' });
     }
 
-    // OTP valid — create the user
+    // otp valid — now create the account
+    // 10 salt rounds for secure hashing
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -292,10 +289,10 @@ async function verifyOtp(req, res) {
       data: { name, email, password: hashedPassword, defaultAddress: location || null }
     });
 
-    // Clean up the OTP record
+    // otp used, clean up
     await prisma.otpVerification.delete({ where: { email } });
 
-    // Issue JWT
+    // token valid for 7 days
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
 
     res.status(201).json({

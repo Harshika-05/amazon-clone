@@ -3,6 +3,7 @@ const router = express.Router();
 const wishlistController = require('../controllers/wishlistController');
 const authMiddleware = require('../middleware/authMiddleware');
 
+// wishlist is user-specific, need auth
 router.use(authMiddleware);
 
 router.get('/', wishlistController.getWishlist);
