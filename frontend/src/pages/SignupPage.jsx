@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import styles from './Auth.module.css';
 import API_BASE_URL from '../config';
 
+// step enum so we don't use magic strings like "details" all over the code
 const STEPS = { DETAILS: 'details', OTP: 'otp' };
 
 const SignupPage = () => {
@@ -12,16 +13,17 @@ const SignupPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [location, setLocation] = useState('');
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otp, setOtp] = useState(['', '', '', '', '', '']); // 6 separate boxes, each holds 1 digit
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
   const [resendTimer, setResendTimer] = useState(0);
 
+  // useRef array to store references to each OTP input element for auto-focusing
   const otpRefs = useRef([]);
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const { login } = useAuth(); // grab login fn from auth context
+  const navigate = useNavigate(); // programmatic navigation (redirect)
 
   // step 1 — validate form, request otp for email verification
   const handleSendOtp = async (e) => {
@@ -59,7 +61,7 @@ const SignupPage = () => {
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     setError('');
-    const otpCode = otp.join('');
+    const otpCode = otp.join(''); // join array ['1','2','3','4','5','6'] into string "123456"
     if (otpCode.length < 6) return setError('Please enter the complete 6-digit OTP.');
     setLoading(true);
     try {
@@ -84,13 +86,14 @@ const SignupPage = () => {
 
   // auto-advance cursor to next box on digit entry
   const handleOtpChange = (index, value) => {
-    if (!/^\d*$/.test(value)) return;
-    const newOtp = [...otp];
-    newOtp[index] = value.slice(-1);
+    if (!/^\d*$/.test(value)) return; // regex: only allow digits (0-9)
+    const newOtp = [...otp]; // spread = make a copy so we don't mutate state directly
+    newOtp[index] = value.slice(-1); // take only last char (in case multiple typed)
     setOtp(newOtp);
     if (value && index < 5) otpRefs.current[index + 1]?.focus();
   };
 
+  // backspace on empty box = go back to previous box
   const handleOtpKeyDown = (index, e) => {
     if (e.key === 'Backspace' && !otp[index] && index > 0) {
       otpRefs.current[index - 1]?.focus();
@@ -99,6 +102,7 @@ const SignupPage = () => {
 
   // handle pasting full 6-digit code
   const handleOtpPaste = (e) => {
+    // clipboardData.getData grabs pasted text, replace non-digits, take first 6
     const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
     if (pasted.length === 6) {
       setOtp(pasted.split(''));
@@ -108,8 +112,8 @@ const SignupPage = () => {
 
   // 30s cooldown so user cant spam resend
   const startResendTimer = () => {
-    setResendTimer(30);
-    const interval = setInterval(() => {
+    setResendTimer(30); // start from 30 seconds
+    const interval = setInterval(() => { // setInterval = runs every 1000ms (1 second)
       setResendTimer((t) => {
         if (t <= 1) { clearInterval(interval); return 0; }
         return t - 1;
@@ -244,7 +248,7 @@ const SignupPage = () => {
                 {otp.map((digit, i) => (
                   <input
                     key={i}
-                    ref={(el) => (otpRefs.current[i] = el)}
+                    ref={(el) => (otpRefs.current[i] = el)} // store ref to each input
                     type="text"
                     inputMode="numeric"
                     maxLength={1}

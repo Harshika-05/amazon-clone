@@ -1,14 +1,14 @@
-const express = require('express');
-const cors = require('cors');
-const { PrismaClient } = require('@prisma/client');
-require('dotenv').config();
+const express = require('express'); // web framework for node
+const cors = require('cors'); // cross-origin resource sharing — lets frontend on diff port call our api
+const { PrismaClient } = require('@prisma/client'); // ORM to talk to our postgres db
+require('dotenv').config(); // loads .env file into process.env
 
-const app = express();
-const prisma = new PrismaClient();
+const app = express(); // create the express app instance
+const prisma = new PrismaClient(); // single prisma instance shared across the app
 
-// allow frontend to call our api
+// allow frontend to call our api (without cors, browser blocks cross-origin requests)
 app.use(cors());
-// parse incoming json bodies
+// parse incoming json bodies so req.body works
 app.use(express.json());
 
 // keeps render + neon db from sleeping on free tier
@@ -37,12 +37,13 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/reviews', reviewRoutes);
 
-// catch-all for unhandled errors
+// catch-all for unhandled errors (4 params = express error middleware)
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
+// use PORT from env (render sets this) or default 5000 for local dev
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

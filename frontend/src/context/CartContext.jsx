@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from 'axios'; // http client for making api calls (alternative to fetch)
 import { useAuth } from './AuthContext';
 import { useToast } from '../components/common/Toast';
 import API_BASE_URL from '../config';
@@ -9,7 +9,7 @@ const CartContext = createContext();
 export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
-  const [cart, setCart] = useState({ items: [] });
+  const [cart, setCart] = useState({ items: [] }); // init with empty items array so .map won't crash
   const [loading, setLoading] = useState(true);
   const { token } = useAuth();
   const { showToast } = useToast();
@@ -29,7 +29,7 @@ export const CartProvider = ({ children }) => {
     } catch (error) {
       console.error('Failed to fetch cart:', error);
       if (error.response && error.response.status === 401) {
-        setCart({ items: [] });
+        setCart({ items: [] }); // 401 = unauthorized, clear cart
       }
     } finally {
       setLoading(false);
@@ -41,9 +41,11 @@ export const CartProvider = ({ children }) => {
   }, [token]);
 
   // add product to cart, re-fetch to stay in sync
+  // quantity = 1 is a default parameter — if not passed, defaults to 1
   const addToCart = async (productId, quantity = 1) => {
     if (!token) return showToast('Please login to add items to cart', 'error');
     try {
+      // axios.post = sends POST request to create/add data
       await axios.post(`${API_BASE_URL}/api/cart/items`, { productId, quantity }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -55,6 +57,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  // update qty of existing cart item (PUT = update existing resource)
   const updateQuantity = async (itemId, quantity) => {
     if (!token) return;
     try {
@@ -67,6 +70,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  // remove item entirely (DELETE = remove resource)
   const removeFromCart = async (itemId) => {
     if (!token) return;
     try {
@@ -83,7 +87,7 @@ export const CartProvider = ({ children }) => {
     setCart({ items: [] });
   };
 
-  // calculate total price from all items
+  // reduce = loop through items and accumulate the total price
   const cartTotal = cart.items ? cart.items.reduce((total, item) => total + (item.product.price * item.quantity), 0) : 0;
   // total number of items (for badge on navbar)
   const cartItemCount = cart.items ? cart.items.reduce((count, item) => count + item.quantity, 0) : 0;

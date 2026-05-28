@@ -1,14 +1,16 @@
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const { PrismaClient } = require('@prisma/client'); // destructuring PrismaClient from prisma package
+const bcrypt = require('bcryptjs'); // for hashing passwords
+const jwt = require('jsonwebtoken'); // for creating auth tokens
 const { sendOtpEmail } = require('../services/emailService');
 
 const prisma = new PrismaClient();
+// fallback secret for local dev, in production this comes from env vars
 const JWT_SECRET = process.env.JWT_SECRET || 'amazon-clone-super-secret-key-2026';
 
 // register — create new account
 const register = async (req, res) => {
   try {
+    // destructure fields from request body (sent by frontend)
     const { name, email, password, location } = req.body;
 
     if (!name || !email || !password) {
@@ -16,6 +18,7 @@ const register = async (req, res) => {
     }
 
     // check if email is already taken
+    // findUnique = prisma method that finds exactly one record by unique field
     const existingUser = await prisma.user.findUnique({
       where: { email }
     });
@@ -41,6 +44,7 @@ const register = async (req, res) => {
     // token valid for 7 days
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
 
+    // 201 = HTTP "Created" status code
     res.status(201).json({
       token,
       user: {
@@ -82,7 +86,7 @@ const login = async (req, res) => {
 
     // always gives 6 digits (100000-999999)
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // Date.now() = current ms + 10min in ms
 
     // upsert = update if exists, create if not
     await prisma.otpVerification.upsert({
@@ -168,8 +172,8 @@ const verifyLoginOtp = async (req, res) => {
 const getMe = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
-      select: {
+      where: { id: req.user.id }, // req.user was set by authMiddleware
+      select: { // select = only fetch these fields (lighter than include)
         id: true,
         name: true,
         email: true,

@@ -1,21 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, MapPin, ChevronDown, Menu, ShoppingCart } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom'; // Link = <a> without page reload
+import { Search, MapPin, ChevronDown, Menu, ShoppingCart } from 'lucide-react'; // icon library
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import styles from './Navbar.module.css';
+import styles from './Navbar.module.css'; // CSS modules = scoped class names, no global conflicts
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { cartItemCount } = useCart();
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const isFirstRender = useRef(true);
+  const navigate = useNavigate(); // hook to change url programmatically
+  const location = useLocation(); // hook to read current url path and params
+  const isFirstRender = useRef(true); // ref persists across re-renders, used to skip first debounce
 
   // sync search bar input with the ?search= url param when page loads
   useEffect(() => {
     if (location.pathname === '/') {
+      // URLSearchParams = built-in way to parse ?key=value from url
       const params = new URLSearchParams(location.search);
       const q = params.get('search');
       if (q !== null && q !== searchQuery) {
@@ -39,6 +40,7 @@ const Navbar = () => {
       }
     }, 500);
 
+    // return cleanup function — clears timer if user types again before 500ms
     return () => clearTimeout(timer);
   }, [searchQuery, navigate, location.pathname, location.search]);
 

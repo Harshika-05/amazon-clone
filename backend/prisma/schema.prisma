@@ -1,23 +1,24 @@
+// tells prisma to generate the js client we import in our code
 generator client {
   provider = "prisma-client-js"
 }
 
-// Configured for PostgreSQL
+// db connection — reads DATABASE_URL from .env file
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id             String    @id @default(uuid())
+  id             String    @id @default(uuid()) // uuid = universally unique id, auto-generated
   name           String
-  email          String    @unique
-  password       String
-  defaultAddress String?
-  cart           Cart?
-  orders         Order[]
-  wishlist       Wishlist?
-  reviews        Review[]
+  email          String    @unique // no two users can have same email
+  password       String    // stored as bcrypt hash, never plaintext
+  defaultAddress String?   // ? means optional/nullable
+  cart           Cart?     // one-to-one: each user has max one cart
+  orders         Order[]   // one-to-many: user can have many orders
+  wishlist       Wishlist? // one-to-one
+  reviews        Review[]  // one-to-many
 }
 
 model Category {
@@ -30,12 +31,12 @@ model Product {
   id            String         @id @default(uuid())
   name          String
   description   String
-  price         Float
-  stock         Int
+  price         Float          // stored as decimal number
+  stock         Int            // current inventory count
   categoryId    String
-  category      Category       @relation(fields: [categoryId], references: [id])
-  images        ProductImage[]
-  cartItems     CartItem[]
+  category      Category       @relation(fields: [categoryId], references: [id]) // foreign key linking to Category
+  images        ProductImage[] // one product can have multiple images
+  cartItems     CartItem[]     // reverse relation — which carts have this product
   orderItems    OrderItem[]
   wishlistItems WishlistItem[]
   reviews       Review[]
@@ -61,7 +62,7 @@ model CartItem {
   cart      Cart    @relation(fields: [cartId], references: [id])
   productId String
   product   Product @relation(fields: [productId], references: [id])
-  quantity  Int     @default(1)
+  quantity  Int     @default(1) // defaults to 1 if not specified
 }
 
 model Order {
@@ -70,9 +71,9 @@ model Order {
   user               User        @relation(fields: [userId], references: [id])
   totalAmount        Float
   shippingAddress    String
-  status             String      @default("PENDING") // PENDING, SHIPPED, DELIVERED, CANCELLED
-  cancellationReason String?
-  createdAt          DateTime    @default(now())
+  status             String      @default("PENDING") // can be PENDING, SHIPPED, DELIVERED, CANCELLED
+  cancellationReason String?     // only filled when user cancels
+  createdAt          DateTime    @default(now()) // auto-set to current timestamp
   items              OrderItem[]
 }
 
@@ -83,7 +84,7 @@ model OrderItem {
   productId       String
   product         Product @relation(fields: [productId], references: [id])
   quantity        Int
-  priceAtPurchase Float
+  priceAtPurchase Float   // snapshot of price when ordered, so price changes later don't affect old orders
 }
 
 model Wishlist {
@@ -101,7 +102,7 @@ model WishlistItem {
   product    Product  @relation(fields: [productId], references: [id])
   createdAt  DateTime @default(now())
 
-  @@unique([wishlistId, productId])
+  @@unique([wishlistId, productId]) // compound unique — same product can't be in wishlist twice
 }
 
 model Review {
@@ -113,15 +114,16 @@ model Review {
   productId String
   product   Product  @relation(fields: [productId], references: [id])
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt // prisma auto-updates this on every edit
 
-  @@unique([userId, productId]) // One review per user per product
+  @@unique([userId, productId]) // compound unique — one review per user per product
 }
 
+// temporary otp storage — deleted after successful verification
 model OtpVerification {
   id        String   @id @default(uuid())
-  email     String   @unique
+  email     String   @unique // one active otp per email at a time
   otp       String
-  expiresAt DateTime
+  expiresAt DateTime // checked against current time to validate
   createdAt DateTime @default(now())
 }

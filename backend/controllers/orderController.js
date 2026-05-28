@@ -10,6 +10,7 @@ exports.placeOrder = async (req, res, next) => {
     const userId = req.user.id;
     const { shippingAddress } = req.body;
 
+    // include = fetch related models along with main query (eager loading)
     const cart = await prisma.cart.findUnique({
       where: { userId },
       include: {
@@ -24,6 +25,7 @@ exports.placeOrder = async (req, res, next) => {
     }
 
     let totalAmount = 0;
+    // .map transforms each cart item into the shape needed for order items
     const orderItemsData = cart.items.map(item => {
       totalAmount += item.product.price * item.quantity;
       return {
@@ -33,7 +35,7 @@ exports.placeOrder = async (req, res, next) => {
       };
     });
 
-    // transaction — both order+clear happen together or neither
+    // $transaction = if any query inside fails, all changes rollback (atomic)
     const result = await prisma.$transaction(async (prisma) => {
       const order = await prisma.order.create({
         data: {
@@ -79,7 +81,7 @@ exports.placeOrder = async (req, res, next) => {
 
     res.json({ ...result });
   } catch (error) {
-    next(error);
+    next(error); // pass to express error handler middleware
   }
 };
 
